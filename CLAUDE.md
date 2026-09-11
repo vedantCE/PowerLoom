@@ -36,7 +36,35 @@ React dashboard (plan, savings, what-if sliders)
   google-genai, pydantic-settings, pytest
 - **Frontend**: Vite + React + TypeScript, Tailwind CSS v4, recharts, framer-motion, axios,
   zustand, lucide-react
-- **DB**: SQLite (via SQLModel) for hackathon simplicity
+- **DB**: Neon PostgreSQL (primary) via SQLModel/psycopg 3, with automatic SQLite fallback
+
+## API Contract
+
+- Every request/response shape is a Pydantic model in `backend/app/schemas/` (`common.py`,
+  `village.py`, `optimize.py`, `explain.py`) and is mirrored 1:1 as a TypeScript type in
+  `frontend/src/types/api.ts` (same snake_case field names; enums as string unions).
+- **Any schema change MUST update both files in the same commit.** The frontend never
+  hand-rolls a shape that diverges from the backend schema it corresponds to.
+
+## Database
+
+- **Neon PostgreSQL is primary.** `DATABASE_URL` in `backend/.env` should be the Neon
+  *pooled* connection string (hostname contains `-pooler`). The engine is created with
+  `pool_pre_ping=True` (Neon suspends idle compute and drops stale connections) plus
+  `pool_size=5`, `max_overflow=5`, `pool_recycle=300`.
+- **SQLite is the automatic offline fallback.** On startup (`app/db/session.py`), the app
+  tests the primary `DATABASE_URL` with `SELECT 1`; if that fails it logs a warning and
+  switches to `SQLITE_FALLBACK_URL` instead of crashing. `GET /api/health` reports which
+  backend is active (`database`) and whether it's healthy (`database_ok`).
+- **JSON columns use the JSONB variant**: `sa.JSON().with_variant(JSONB, "postgresql")`, so
+  the same model works as JSONB on Postgres and JSON on SQLite.
+- **Tests always use in-memory SQLite** (`sqlite:///:memory:` with `StaticPool`), forced by
+  `backend/tests/conftest.py` before the app is imported. Tests must never connect to Neon.
+- **Secrets live only in `backend/.env`** (gitignored) — never commit a real `DATABASE_URL`
+  or `GEMINI_API_KEY`.
+- Preset endpoints (`GET /api/presets`, `GET /api/presets/{id}`) read from the `VillagePreset`
+  table first and transparently fall back to the JSON files in `backend/app/presets/` if the
+  database is unavailable or unseeded.
 
 ## Conventions
 
