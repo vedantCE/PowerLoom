@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+pydantic>=2
+pydantic-settings
+sqlmodel
+pulp
+httpx
+numpy
+pandas
+google-genai
+python-dotenv
+pytest
