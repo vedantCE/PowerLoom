@@ -1,0 +1,128 @@
+{
+  "id": "kutch_village",
+  "location": {
+    "name": "Kutch Village",
+    "district": "Kutch",
+    "state": "Gujarat",
+    "latitude": 23.25,
+    "longitude": 69.67
+  },
+  "solar": {
+    "capacity_kw": 20,
+    "system_loss": 0.12,
+    "temp_coeff_per_c": -0.004
+  },
+  "wind": {
+    "capacity_kw": 10,
+    "cut_in_ms": 3.0,
+    "rated_ms": 11.0,
+    "cut_out_ms": 25.0,
+    "hub_height_m": 30
+  },
+  "battery": {
+    "capacity_kwh": 50,
+    "soc_min": 0.2,
+    "soc_max": 1.0,
+    "soc_initial": 0.5,
+    "max_charge_kw": 25,
+    "max_discharge_kw": 25,
+    "eff_charge": 0.95,
+    "eff_discharge": 0.95,
+    "wear_cost_inr_per_kwh": 2.0
+  },
+  "diesel": {
+    "capacity_kw": 25,
+    "min_load_frac": 0.3,
+    "fuel_intercept_l_per_h_per_kw": 0.08145,
+    "fuel_slope_l_per_kwh": 0.246,
+    "fuel_price_inr_per_l": 90.0,
+    "co2_kg_per_l": 2.68
+  },
+  "economics": {
+    "co2_penalty_inr_per_kg": 2.0,
+    "shed_penalty_inr_per_kwh": 100.0
+  },
+  "demand_components": [
+    {
+      "name": "household_lighting",
+      "category": "lighting",
+      "critical": false,
+      "quantity": 180,
+      "rated_w": 15,
+      "usage_factor": 0.6,
+      "schedule": [[18, 23]]
+    },
+    {
+      "name": "household_fans",
+      "category": "appliance",
+      "critical": false,
+      "quantity": 150,
+      "rated_w": 60,
+      "usage_factor": 0.5,
+      "schedule": [[10, 23]]
+    },
+    {
+      "name": "household_tv",
+      "category": "appliance",
+      "critical": false,
+      "quantity": 80,
+      "rated_w": 90,
+      "usage_factor": 0.4,
+      "schedule": [[18, 22]]
+    },
+    {
+      "name": "mobile_charging",
+      "category": "appliance",
+      "critical": false,
+      "quantity": 200,
+      "rated_w": 10,
+      "usage_factor": 0.5,
+      "schedule": [[6, 9], [18, 22]]
+    },
+    {
+      "name": "primary_health_centre",
+      "category": "health",
+      "critical": true,
+      "quantity": 1,
+      "rated_w": 3000,
+      "usage_factor": 0.5,
+      "schedule": [[0, 24]]
+    },
+    {
+      "name": "water_pump",
+      "category": "water",
+      "critical": true,
+      "quantity": 2,
+      "rated_w": 3000,
+      "usage_factor": 0.8,
+      "schedule": [[6, 9], [18, 20]]
+    },
+    {
+      "name": "school",
+      "category": "education",
+      "critical": false,
+      "quantity": 1,
+      "rated_w": 2000,
+      "usage_factor": 0.5,
+      "schedule": [[9, 15]]
+    },
+    {
+      "name": "shops",
+      "category": "commercial",
+      "critical": false,
+      "quantity": 15,
+      "rated_w": 300,
+      "usage_factor": 0.5,
+      "schedule": [[9, 20]]
+    },
+    {
+      "name": "street_lights",
+      "category": "lighting",
+      "critical": false,
+      "quantity": 40,
+      "rated_w": 80,
+      "usage_factor": 1.0,
+      "schedule": [[18, 24], [0, 6]]
+    }
+  ]
+}

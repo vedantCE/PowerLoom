@@ -3,6 +3,7 @@ uvicorn[standard]
 pydantic>=2
 pydantic-settings
 sqlmodel
+psycopg[binary]
 pulp
 httpx
 numpy

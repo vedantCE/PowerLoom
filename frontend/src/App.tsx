@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { apiClient } from './api/client'
-import type { HealthResponse } from './types/health'
+import { getHealth } from './api/client'
+import type { HealthResponse } from './types/api'
 
 type ConnectionState = 'checking' | 'online' | 'offline'
 
@@ -11,11 +11,10 @@ function App() {
   useEffect(() => {
     let cancelled = false
 
-    apiClient
-      .get<HealthResponse>('/health')
-      .then((response) => {
+    getHealth()
+      .then((data) => {
         if (cancelled) return
-        setHealth(response.data)
+        setHealth(data)
         setConnection('online')
       })
       .catch(() => {
@@ -63,7 +62,8 @@ function App() {
 
         {connection === 'online' && health && (
           <span className="text-xs text-slate-500">
-            solver: {health.solver_available ? 'available' : 'unavailable'}
+            solver: {health.solver_available ? 'available' : 'unavailable'} &middot; database:{' '}
+            {health.database} ({health.database_ok ? 'ok' : 'unhealthy'})
           </span>
         )}
       </div>
