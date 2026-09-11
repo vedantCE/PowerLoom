@@ -1,77 +1,159 @@
 import { create } from 'zustand'
-import type { Language, OptimizeRequest, OptimizeResponse } from '../types/api'
-import { optimize } from '../api/client'
-import mockOptimizeResponse from '../mocks/optimize-response.json'
+import type {
+  HealthResponse,
+  Language,
+  OptimizeResponse,
+  PresetSummary,
+  WhatIfOverrides,
+} from '../types/api'
+import * as api from '../api/client'
 
-export type FetchStatus = 'idle' | 'loading' | 'success' | 'error'
+export type AppStatus = 'idle' | 'loading' | 'success' | 'error'
 
-interface AppState {
+export interface AppState {
+  presets: PresetSummary[]
+  selectedVillageId: string | null
+  horizon: 24 | 48
+  overrides: WhatIfOverrides
+  language: Language
   result: OptimizeResponse | null
-  status: FetchStatus
+  status: AppStatus
   error: string | null
   selectedHour: number | null
-  compareBaseline: boolean
-  showCurtailed: boolean
-  language: Language
-  villageId: string
+  health: HealthResponse | null
 
   // Actions
-  setSelectedHour: (hour: number | null) => void
-  setCompareBaseline: (val: boolean) => void
-  toggleCompareBaseline: () => void
-  setShowCurtailed: (val: boolean) => void
-  toggleShowCurtailed: () => void
+  loadPresets: () => Promise<void>
+  loadHealth: () => Promise<void>
+  selectVillage: (id: string) => Promise<void>
+  setHorizon: (horizon: 24 | 48) => Promise<void>
+  setOverride: <K extends keyof WhatIfOverrides>(key: K, value: WhatIfOverrides[K]) => void
+  resetOverrides: () => void
   setLanguage: (lang: Language) => void
-  setVillageId: (id: string) => void
-  setResult: (res: OptimizeResponse | null) => void
-  setStatus: (status: FetchStatus) => void
-  fetchOptimization: (req?: Partial<OptimizeRequest>) => Promise<void>
-  loadMockData: () => void
+  runOptimize: () => Promise<void>
+  selectHour: (hour: number | null) => void
 }
 
+let activeRequestId = 0
+
 export const useAppStore = create<AppState>((set, get) => ({
-  result: mockOptimizeResponse as unknown as OptimizeResponse,
-  status: 'success',
+  presets: [],
+  selectedVillageId: null,
+  horizon: 48,
+  overrides: {},
+  language: 'en',
+  result: null,
+  status: 'idle',
   error: null,
   selectedHour: 0,
-  compareBaseline: false,
-  showCurtailed: false,
-  language: 'en',
-  villageId: 'kutch_village',
+  health: null,
 
-  setSelectedHour: (selectedHour) => set({ selectedHour }),
-  setCompareBaseline: (compareBaseline) => set({ compareBaseline }),
-  toggleCompareBaseline: () => set((state) => ({ compareBaseline: !state.compareBaseline })),
-  setShowCurtailed: (showCurtailed) => set({ showCurtailed }),
-  toggleShowCurtailed: () => set((state) => ({ showCurtailed: !state.showCurtailed })),
-  setLanguage: (language) => set({ language }),
-  setVillageId: (villageId) => set({ villageId }),
-  setResult: (result) => set({ result }),
-  setStatus: (status) => set({ status }),
-
-  loadMockData: () => {
-    set({
-      result: mockOptimizeResponse as unknown as OptimizeResponse,
-      status: 'success',
-      error: null,
-    })
-  },
-
-  fetchOptimization: async (reqOverrides = {}) => {
-    const { villageId } = get()
-    set({ status: 'loading', error: null })
+  loadPresets: async () => {
     try {
-      const data = await optimize({
-        village_id: villageId,
-        horizon_hours: 48,
-        ...reqOverrides,
-      })
-      set({ result: data, status: 'success' })
+      const presets = await api.getPresets()
+      set({ presets })
+      const currentSelected = get().selectedVillageId
+      if (!currentSelected && presets.length > 0) {
+        const defaultPreset = presets.find((p) => p.id === 'kutch_village') ?? presets[0]
+        await get().selectVillage(defaultPreset.id)
+      }
     } catch (err) {
       set({
-        status: 'error',
-        error: err instanceof Error ? err.message : 'Failed to fetch optimization plan',
+        error: err instanceof Error ? err.message : 'Failed to load village presets',
       })
     }
+  },
+
+  loadHealth: async () => {
+    try {
+      const health = await api.getHealth()
+      set({ health })
+    } catch {
+      set({
+        health: {
+          status: 'error',
+          app: 'powerloom',
+          version: '0.1.0',
+          solver_available: false,
+          database: 'sqlite',
+          database_ok: false,
+        },
+      })
+    }
+  },
+
+  selectVillage: async (id: string) => {
+    set({ selectedVillageId: id })
+    await get().runOptimize()
+  },
+
+  setHorizon: async (horizon: 24 | 48) => {
+    set({ horizon })
+    if (get().selectedVillageId) {
+      await get().runOptimize()
+    }
+  },
+
+  setOverride: (key, value) => {
+    set((state) => ({
+      overrides: {
+        ...state.overrides,
+        [key]: value,
+      },
+    }))
+  },
+
+  resetOverrides: () => {
+    set({ overrides: {} })
+  },
+
+  setLanguage: (language: Language) => {
+    set({ language })
+  },
+
+  runOptimize: async () => {
+    const villageId = get().selectedVillageId
+    if (!villageId) return
+
+    const requestId = ++activeRequestId
+    set({ status: 'loading', error: null })
+
+    try {
+      const response = await api.optimize({
+        village_id: villageId,
+        horizon_hours: get().horizon,
+        overrides: Object.keys(get().overrides).length > 0 ? get().overrides : undefined,
+      })
+
+      // Race condition protection: discard if another request was initiated
+      if (requestId !== activeRequestId) {
+        return
+      }
+
+      const currentSelectedHour = get().selectedHour
+      const nextSelectedHour =
+        currentSelectedHour !== null && currentSelectedHour < response.hourly.length
+          ? currentSelectedHour
+          : 0
+
+      set({
+        result: response,
+        status: 'success',
+        selectedHour: nextSelectedHour,
+        error: null,
+      })
+    } catch (err) {
+      if (requestId !== activeRequestId) {
+        return
+      }
+      set({
+        status: 'error',
+        error: err instanceof Error ? err.message : 'Failed to compute optimization plan',
+      })
+    }
+  },
+
+  selectHour: (hour: number | null) => {
+    set({ selectedHour: hour })
   },
 }))

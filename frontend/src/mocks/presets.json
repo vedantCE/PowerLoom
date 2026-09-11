@@ -1,0 +1,32 @@
+[
+  {
+    "id": "kutch_village",
+    "name": "Kutch Village",
+    "district": "Kutch",
+    "state": "Gujarat",
+    "solar_kw": 20,
+    "wind_kw": 10,
+    "battery_kwh": 50,
+    "diesel_kw": 25
+  },
+  {
+    "id": "dang_village",
+    "name": "Dang Village",
+    "district": "Dang",
+    "state": "Gujarat",
+    "solar_kw": 15,
+    "wind_kw": 0,
+    "battery_kwh": 40,
+    "diesel_kw": 20
+  },
+  {
+    "id": "sundarbans_island",
+    "name": "Gosaba Island Village",
+    "district": "South 24 Parganas",
+    "state": "West Bengal",
+    "solar_kw": 25,
+    "wind_kw": 5,
+    "battery_kwh": 60,
+    "diesel_kw": 30
+  }
+]

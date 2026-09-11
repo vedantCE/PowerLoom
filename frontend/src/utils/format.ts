@@ -1,65 +1,84 @@
-export function formatKw(val: number | null | undefined): string {
-  if (val == null || isNaN(val)) return '0.0 kW'
-  return `${Number(val).toFixed(1)} kW`
+/**
+ * Formatting utilities for Powerloom dashboard.
+ * - Currency in Indian Rupees (₹) with en-IN numbering format
+ * - Power in kW, Energy in kWh
+ * - Percentages
+ * - Timezone-aware hour and day-hour formatting (Asia/Kolkata)
+ */
+
+export function formatINR(val: number, decimals = 0): string {
+  if (isNaN(val)) return '₹0'
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(val)
 }
 
-export function formatKwh(val: number | null | undefined): string {
-  if (val == null || isNaN(val)) return '0.0 kWh'
-  return `${Number(val).toFixed(1)} kWh`
+export function formatKw(val: number, decimals = 1): string {
+  if (isNaN(val)) return '0.0 kW'
+  return `${val.toLocaleString('en-IN', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })} kW`
 }
 
-export function formatInr(val: number | null | undefined): string {
-  if (val == null || isNaN(val)) return '₹0'
-  return `₹${Math.round(Number(val)).toLocaleString('en-IN')}`
+export function formatKwh(val: number, decimals = 1): string {
+  if (isNaN(val)) return '0.0 kWh'
+  return `${val.toLocaleString('en-IN', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })} kWh`
 }
 
-export function formatPct(val: number | null | undefined): string {
-  if (val == null || isNaN(val)) return '0.0%'
-  return `${Number(val).toFixed(1)}%`
-}
-
-export function formatCo2(val: number | null | undefined): string {
-  if (val == null || isNaN(val)) return '0.0 kg'
-  return `${Number(val).toFixed(1)} kg`
-}
-
-export function formatLiters(val: number | null | undefined): string {
-  if (val == null || isNaN(val)) return '0.0 L'
-  return `${Number(val).toFixed(1)} L`
-}
-
-export function formatHourTick(hourIndex: number, timestamp?: string): string {
-  if (timestamp) {
-    try {
-      const date = new Date(timestamp)
-      const hours = date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        hour12: true,
-        timeZone: 'Asia/Kolkata',
-      })
-      return hours
-    } catch {
-      // Fall back to index calculation
-    }
+export function formatPct(val: number, forceDecimals?: number): string {
+  if (isNaN(val)) return '0%'
+  if (forceDecimals !== undefined) {
+    return `${val.toFixed(forceDecimals)}%`
   }
-  const h = hourIndex % 24
-  if (h === 0) return '12 AM'
-  if (h === 12) return '12 PM'
-  return h < 12 ? `${h} AM` : `${h - 12} PM`
+  const isWhole = Math.abs(val - Math.round(val)) < 0.001
+  return `${isWhole ? Math.round(val) : val.toFixed(1)}%`
 }
 
-export function formatFullTimestamp(timestamp: string): string {
+export function formatHourLabel(timestamp: string): string {
   try {
-    const date = new Date(timestamp)
-    return date.toLocaleString('en-IN', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    const d = new Date(timestamp)
+    return d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
       hour12: true,
       timeZone: 'Asia/Kolkata',
     })
   } catch {
-    return timestamp
+    return '12 AM'
+  }
+}
+
+export function formatDayHour(timestamp: string, hourIndex?: number): string {
+  const timeLabel = formatHourLabel(timestamp)
+
+  if (typeof hourIndex === 'number') {
+    if (hourIndex < 24) {
+      return `Today ${timeLabel}`
+    } else if (hourIndex < 48) {
+      return `Tomorrow ${timeLabel}`
+    } else {
+      const dayNum = Math.floor(hourIndex / 24) + 1
+      return `Day ${dayNum} ${timeLabel}`
+    }
+  }
+
+  // Fallback: calculate difference based on date
+  try {
+    const d = new Date(timestamp)
+    const day = d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'Asia/Kolkata',
+    })
+    return `${day} ${timeLabel}`
+  } catch {
+    return timeLabel
   }
 }
