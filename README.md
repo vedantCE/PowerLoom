@@ -4,7 +4,6 @@ Forecast-driven energy mix optimizer for off-grid village microgrids in India. U
 forecasts to estimate solar/wind generation, runs a MILP optimizer to produce a 48-hour dispatch
 plan across solar, wind, battery, and diesel, and explains the plan in plain language via Gemini.
 
-See [CLAUDE.md](./CLAUDE.md) for full product context, architecture, and conventions.
 
 ## Prerequisites
 
