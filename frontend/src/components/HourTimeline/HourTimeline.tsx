@@ -86,7 +86,7 @@ function getDominantSource(h: HourlyDispatch): DominantSourceInfo {
 }
 
 export const HourTimeline: React.FC = () => {
-  const { t } = useT()
+  const { t, lang } = useT()
   const { result, selectedHour, selectHour, status } = useAppStore()
 
   if (status === 'loading' && !result) {
@@ -170,7 +170,7 @@ export const HourTimeline: React.FC = () => {
           {hourly.map((hour) => {
             const isSelected = selectedHour === hour.hour_index
             const dominant = getDominantSource(hour)
-            const timeLabel = formatHourLabel(hour.timestamp)
+            const timeLabel = formatHourLabel(hour.timestamp, lang)
 
             return (
               <button

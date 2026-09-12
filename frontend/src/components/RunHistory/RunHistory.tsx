@@ -7,7 +7,7 @@ import { formatINR, formatHourLabel } from '../../utils/format'
 import { describeOverrides } from './describeOverrides'
 
 export const RunHistory: React.FC = () => {
-  const { t } = useT()
+  const { t, lang } = useT()
   const [open, setOpen] = useState(false)
   const runHistory = useAppStore((s) => s.runHistory)
   const compareRunIds = useAppStore((s) => s.compareRunIds)
@@ -77,7 +77,7 @@ export const RunHistory: React.FC = () => {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
                       <span className="font-mono text-[11px] text-slate-400">
-                        {formatHourLabel(entry.createdAt)}
+                        {formatHourLabel(entry.createdAt, lang)}
                       </span>
                       <span className="truncate">{describeOverrides(entry.overrides, t)}</span>
                     </div>

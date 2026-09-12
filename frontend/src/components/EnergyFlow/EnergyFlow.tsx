@@ -119,7 +119,7 @@ export const EnergyFlow: React.FC = () => {
         tooltip={t('energyFlowTooltip')}
         right={
           <span className="text-xs font-semibold text-slate-600">
-            {formatDayHour(hour.timestamp, hour.hour_index)}
+            {formatDayHour(hour.timestamp, hour.hour_index, lang)}
           </span>
         }
       />
@@ -142,7 +142,7 @@ export const EnergyFlow: React.FC = () => {
           viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
           className="h-auto w-full"
           role="img"
-          aria-label={`${t('energyFlowTitle')}: ${formatDayHour(hour.timestamp, hour.hour_index)}`}
+          aria-label={`${t('energyFlowTitle')}: ${formatDayHour(hour.timestamp, hour.hour_index, lang)}`}
         >
           {flow.links.filter((l) => shouldDrawLink(l, flow)).map((link) => (
             <FlowLink

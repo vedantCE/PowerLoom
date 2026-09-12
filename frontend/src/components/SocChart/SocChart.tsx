@@ -27,14 +27,14 @@ const AXIS_TEXT = { fill: '#475569', fontSize: 12 }
 const DEFAULT_SAFETY_RESERVE_PCT = 20
 
 function SocTooltip({ active, payload }: TooltipContentProps) {
-  const { t } = useT()
+  const { t, lang } = useT()
   if (!active || !payload || payload.length === 0) return null
   const data = payload[0].payload as SocSeriesPoint
 
   return (
     <div className="min-w-[190px] rounded-xl border border-slate-200 bg-white p-3 text-xs shadow-xl">
       <div className="mb-2 flex items-center justify-between border-b border-slate-100 pb-2">
-        <span className="font-bold text-slate-900">{formatDayHour(data.timestamp, data.hour_index)}</span>
+        <span className="font-bold text-slate-900">{formatDayHour(data.timestamp, data.hour_index, lang)}</span>
         <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-500">
           {t('hourLabel')} {data.hour_index}
         </span>
@@ -66,7 +66,7 @@ function SocTooltip({ active, payload }: TooltipContentProps) {
 }
 
 export const SocChart: React.FC = () => {
-  const { t } = useT()
+  const { t, lang } = useT()
   const result = useAppStore((s) => s.result)
   const status = useAppStore((s) => s.status)
   const selectedHour = useAppStore((s) => s.selectedHour)
@@ -80,7 +80,10 @@ export const SocChart: React.FC = () => {
   const naiveHourly = useMemo(() => result?.baselines?.find((b) => b.strategy === 'naive')?.hourly, [result])
   const hourly = result?.hourly
 
-  const chartData = useMemo(() => (hourly ? toSocSeries(hourly, naiveHourly) : []), [hourly, naiveHourly])
+  const chartData = useMemo(
+    () => (hourly ? toSocSeries(hourly, naiveHourly, lang) : []),
+    [hourly, naiveHourly, lang]
+  )
   const boundaries = useMemo(() => (hourly ? dayBoundaries(hourly) : []), [hourly])
   const nights = useMemo(() => (hourly ? nightRanges(hourly) : []), [hourly])
 

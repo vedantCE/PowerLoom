@@ -5,6 +5,7 @@ pydantic-settings
 sqlmodel
 psycopg[binary]
 pulp
+highspy
 httpx
 numpy
 pandas

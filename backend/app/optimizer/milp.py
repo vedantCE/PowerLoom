@@ -10,6 +10,7 @@ import hashlib
 import json
 import logging
 import os
+import shutil
 import time
 from collections import OrderedDict
 
@@ -54,6 +55,75 @@ def _cache_key(inputs: OptimizationInputs, fast: bool) -> str:
     }
     encoded = json.dumps(payload, sort_keys=True, default=str).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def get_solver(
+    time_limit_s: float,
+    gap_rel: float,
+    threads: int = SOLVER_THREADS,
+) -> pulp.LpSolver:
+    """Return the best available MILP solver.
+
+    Prefers HiGHS (via highspy), which is fast, modern, and natively runs on
+    macOS (Apple Silicon/Intel), Linux, and Windows without external binaries.
+    Falls back to native CBC (via PATH, Homebrew, or CBC_PATH) or PULP_CBC_CMD.
+    """
+    try:
+        if hasattr(pulp, "HiGHS") and pulp.HiGHS().available():
+            return pulp.HiGHS(
+                msg=False,
+                timeLimit=time_limit_s,
+                threads=threads,
+                gapRel=gap_rel,
+            )
+    except Exception as exc:
+        logger.debug("HiGHS solver check failed: %s", exc)
+
+    cbc_path = os.getenv("CBC_PATH")
+    if cbc_path is None:
+        cbc_path = next(
+            (
+                path
+                for path in (
+                    shutil.which("cbc"),
+                    "/opt/homebrew/opt/cbc/bin/cbc",
+                    "/opt/homebrew/bin/cbc",
+                    "/usr/local/opt/cbc/bin/cbc",
+                    "/usr/local/bin/cbc",
+                )
+                if path and os.path.isfile(path)
+            ),
+            None,
+        )
+
+    if cbc_path:
+        return pulp.COIN_CMD(
+            path=cbc_path,
+            msg=False,
+            timeLimit=time_limit_s,
+            threads=threads,
+            gapRel=gap_rel,
+        )
+
+    try:
+        bundled = pulp.PULP_CBC_CMD(
+            msg=False,
+            timeLimit=time_limit_s,
+            threads=threads,
+            gapRel=gap_rel,
+        )
+        if bundled.available():
+            return bundled
+    except Exception:
+        pass
+
+    return pulp.COIN_CMD(
+        path="cbc",
+        msg=False,
+        timeLimit=time_limit_s,
+        threads=threads,
+        gapRel=gap_rel,
+    )
 
 
 def format_solver_status(status: str, gap_rel: float) -> str:
@@ -219,9 +289,7 @@ def solve_dispatch(
 
     prob += fuel_cost + co2_cost + battery_wear_cost + shed_cost
 
-    solver = pulp.PULP_CBC_CMD(
-        msg=False, timeLimit=time_limit_s, threads=SOLVER_THREADS, gapRel=gap_rel
-    )
+    solver = get_solver(time_limit_s=time_limit_s, gap_rel=gap_rel)
     start = time.perf_counter()
     prob.solve(solver)
     solve_time_ms = (time.perf_counter() - start) * 1000
