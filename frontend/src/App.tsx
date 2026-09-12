@@ -19,6 +19,7 @@ import { ToastContainer } from './components/Toast'
 import { ShortcutsOverlay } from './components/ShortcutsOverlay'
 import { OnboardingHints } from './components/OnboardingHints'
 import { OperatorView } from './components/OperatorView'
+import { Chatbot } from './components/Chatbot/Chatbot'
 import { useEffect, useState } from 'react'
 
 const PRESENTATION_FONT_SCALE = '110%'
@@ -247,6 +248,7 @@ export const App: React.FC = () => {
       <ToastContainer />
       <ShortcutsOverlay />
       <OnboardingHints />
+      <Chatbot />
     </div>
   )
 }
