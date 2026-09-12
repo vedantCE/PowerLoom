@@ -39,11 +39,11 @@ def test_fixture_power_balance_and_soc_bounds():
         check(baseline["hourly"])
 
 
-def test_optimize_returns_mock_and_creates_run(client):
+def test_optimize_returns_real_plan_and_creates_run(client):
     response = client.post("/api/optimize", json={"village_id": "kutch_village"})
     assert response.status_code == 200
     data = response.json()
-    assert data["is_mock"] is True
+    assert data["is_mock"] is False
     assert data["village_id"] == "kutch_village"
     run_id = data["run_id"]
 
@@ -53,6 +53,6 @@ def test_optimize_returns_mock_and_creates_run(client):
     assert any(run["id"] == run_id for run in runs)
 
 
-def test_optimize_unknown_village_404(client):
+def test_optimize_unknown_village_422(client):
     response = client.post("/api/optimize", json={"village_id": "does_not_exist"})
-    assert response.status_code == 404
+    assert response.status_code == 422

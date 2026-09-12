@@ -1,1 +1,1 @@
-export * from './EnergyMixChart'
+export { EnergyMixChart } from './EnergyMixChart'

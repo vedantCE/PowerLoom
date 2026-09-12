@@ -8,9 +8,9 @@ export const SavingsCards: React.FC = () => {
   const { t } = useT()
   const { result, status } = useAppStore()
 
-  if (status === 'loading') {
+  if (status === 'loading' && !result) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
@@ -37,7 +37,7 @@ export const SavingsCards: React.FC = () => {
   const uptimeVal = summary?.uptime_pct ?? 100
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
       {/* 1. Cost Saved Card */}
       <div
         id="savings-card-cost"

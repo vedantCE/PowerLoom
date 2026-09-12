@@ -5,6 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session
 
 from app.db.session import get_session
+from app.optimizer.milp import solve_dispatch
+from app.optimizer.verify import verify_dispatch
 from app.presets.loader import load_preset
 from app.schemas.optimize import WhatIfOverrides
 from app.services.demand.model import build_demand_profile
@@ -145,4 +147,44 @@ def debug_inputs(
         "weather": [hour.model_dump(mode="json") for hour in inputs.weather],
         "diesel_available": inputs.diesel_available,
         "warnings": inputs.warnings,
+    }
+
+
+@router.get("/debug/optimize/{village_id}")
+def debug_optimize(
+    village_id: str,
+    horizon: int = Query(default=48, ge=1, le=72),
+    cloud_cover_pct: float | None = Query(default=None, ge=0, le=100),
+    extra_solar_kw: float | None = Query(default=None),
+    extra_battery_kwh: float | None = Query(default=None),
+    diesel_price_inr_per_l: float | None = Query(default=None),
+    initial_soc: float | None = Query(default=None, ge=0, le=1),
+    diesel_available: bool = Query(default=True),
+    session: Session = Depends(get_session),
+) -> dict:
+    overrides = WhatIfOverrides(
+        cloud_cover_pct=cloud_cover_pct,
+        diesel_price_inr_per_l=diesel_price_inr_per_l,
+        extra_solar_kw=extra_solar_kw,
+        extra_battery_kwh=extra_battery_kwh,
+        initial_soc=initial_soc,
+        diesel_available=diesel_available,
+    )
+    try:
+        inputs = prepare_inputs(
+            session=session,
+            village_id=village_id,
+            horizon_hours=horizon,
+            overrides=overrides,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+    result = solve_dispatch(inputs)
+    violations = verify_dispatch(inputs, result)
+
+    return {
+        "result": result.model_dump(mode="json"),
+        "violations": violations,
+        "status": result.status,
     }
