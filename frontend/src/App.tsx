@@ -4,6 +4,7 @@ import { useAppStore } from './store/useAppStore'
 import { useT } from './i18n/strings'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { Header } from './components/Header/Header'
+import { SidebarNav } from './components/SidebarNav'
 import { WhatIfPanel, StressTestBanner } from './components/WhatIfPanel'
 import { RunHistory } from './components/RunHistory'
 import { SavingsCards } from './components/SavingsCards/SavingsCards'
@@ -18,7 +19,7 @@ import { ToastContainer } from './components/Toast'
 import { ShortcutsOverlay } from './components/ShortcutsOverlay'
 import { OnboardingHints } from './components/OnboardingHints'
 import { OperatorView } from './components/OperatorView'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 const PRESENTATION_FONT_SCALE = '110%'
 export const App: React.FC = () => {
@@ -33,6 +34,12 @@ export const App: React.FC = () => {
     presentationMode,
     operatorMode,
   } = useAppStore()
+  // Desktop starts with the sidebar expanded (a persistent, collapsible panel);
+  // mobile starts with it closed (an off-canvas drawer opened from the header)
+  // so it doesn't push the dashboard content down on first load.
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
+  )
 
   useEffect(() => {
     loadHealth()
@@ -55,29 +62,77 @@ export const App: React.FC = () => {
   }, [lang])
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <div
+      className={`bg-slate-50 text-slate-900 antialiased flex flex-col ${
+        operatorMode ? 'min-h-screen lg:h-screen lg:overflow-hidden' : 'min-h-screen'
+      }`}
+    >
       {/* Top Navigation / Control Bar */}
-      <Header />
+      <Header sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen((v) => !v)} />
 
       {/* Main Container: Desktop First, Responsive to Tablet */}
       <main
-        className={`mx-auto px-4 py-6 sm:px-6 lg:px-8 ${presentationMode ? 'max-w-[1800px]' : 'max-w-7xl'}`}
+        className={`mx-auto w-full ${
+          operatorMode
+            ? 'flex-1 min-h-0 flex flex-col px-2 sm:px-3 lg:px-4 py-3'
+            : `py-4 px-3 sm:py-6 sm:px-6 lg:px-8 ${presentationMode ? 'max-w-[1800px]' : 'max-w-7xl'}`
+        }`}
       >
-        <div className="flex flex-col gap-6 lg:flex-row items-start">
-          {/* Left Sidebar: What-if Simulator (Phase 4.3) — hidden in presentation mode
-              and in operator view (analyst-only controls). */}
-          {!presentationMode && !operatorMode && (
-            <div className="w-full space-y-4 lg:w-80 shrink-0">
-              <WhatIfPanel />
-              <RunHistory />
-            </div>
+        <div
+          className={`flex flex-col gap-6 lg:flex-row items-start w-full ${
+            operatorMode ? 'flex-1 min-h-0' : ''
+          }`}
+        >
+          {/* Left Sidebar: persistent, collapsible view-switcher nav, plus the What-if
+              Simulator (Phase 4.3) which is analyst-only and hidden in presentation
+              mode. On mobile it's an off-canvas drawer toggled from the header logo;
+              on desktop (lg+) it's an inline, collapsible panel. */}
+          {!presentationMode && (
+            <>
+              {/* Backdrop: mobile-only, closes the drawer on outside click */}
+              {sidebarOpen && (
+                <div
+                  className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-[1px] lg:hidden"
+                  onClick={() => setSidebarOpen(false)}
+                  aria-hidden="true"
+                />
+              )}
+              <div
+                id="app-sidebar"
+                className={`fixed inset-y-0 left-0 z-50 w-[85vw] max-w-xs overflow-y-auto bg-slate-50 p-4 shadow-2xl transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:w-auto lg:max-w-none lg:shrink-0 lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none lg:transition-[width] lg:translate-x-0 ${
+                  sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                } ${sidebarOpen ? 'lg:w-72' : 'lg:w-14'}`}
+              >
+                <div className="space-y-4">
+                  <SidebarNav
+                    open={sidebarOpen}
+                    onToggle={() => setSidebarOpen((v) => !v)}
+                    onNavigate={() => {
+                      if (typeof window !== 'undefined' && !window.matchMedia('(min-width: 1024px)').matches) {
+                        setSidebarOpen(false)
+                      }
+                    }}
+                  />
+                  {!operatorMode && sidebarOpen && (
+                    <>
+                      <WhatIfPanel />
+                      <RunHistory />
+                    </>
+                  )}
+                </div>
+              </div>
+            </>
           )}
 
           {/* Main Content Area */}
           {/* min-w-0 overrides the flex item's default min-width:auto — without it,
               the 48-hour timeline strip's intrinsic width stretches this column (and
               the whole page) wider than the viewport instead of scrolling internally. */}
-          <div className="min-w-0 flex-1 w-full space-y-6">
+          <div
+            className={`min-w-0 flex-1 w-full ${
+              operatorMode ? 'h-full min-h-0 flex flex-col' : 'space-y-6'
+            }`}
+          >
             {/* Stress-test banner: shown when the generator-failure override is active */}
             <StressTestBanner />
 
@@ -113,7 +168,9 @@ export const App: React.FC = () => {
               {operatorMode ? (
                 /* Operator view: simplified, non-technical guidance only —
                    see components/OperatorView. */
-                <OperatorView />
+                <div className="flex-1 min-h-0">
+                  <OperatorView />
+                </div>
               ) : (
                 <>
                   {/* Empty State before first run */}
@@ -152,22 +209,32 @@ export const App: React.FC = () => {
                       <SavingsCards />
 
                       {/* 1b. Baseline Comparison (Phase 4.2), directly below Savings Cards */}
-                      <BaselineComparison />
+                      <div id="baseline-comparison-section">
+                        <BaselineComparison />
+                      </div>
 
                       {/* 2. Energy Flow (Phase 4.4) */}
-                      <EnergyFlow />
+                      <div id="energy-flow-section">
+                        <EnergyFlow />
+                      </div>
 
                       {/* 3. Energy Mix Chart (Phase 4.2) */}
-                      <EnergyMixChart />
+                      <div id="energy-mix-section">
+                        <EnergyMixChart />
+                      </div>
 
                       {/* 4. Battery SOC Chart (Phase 4.2) */}
                       <SocChart />
 
                       {/* 5. 24h / 48h Clickable Timeline (Real dominant colors & selection) */}
-                      <HourTimeline />
+                      <div id="hour-timeline-section">
+                        <HourTimeline />
+                      </div>
 
                       {/* 6. Explain Box (Real plain-language explainer) */}
-                      <ExplainBox />
+                      <div id="explain-box-section">
+                        <ExplainBox />
+                      </div>
                     </div>
                   )}
                 </>
