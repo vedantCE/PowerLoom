@@ -30,11 +30,11 @@ app = FastAPI(title="Powerloom", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-allow_origin_regex=r"https://.*\.vercel\.app",
 app.include_router(health.router, prefix="/api")
 app.include_router(presets.router, prefix="/api")
 app.include_router(optimize.router, prefix="/api")
