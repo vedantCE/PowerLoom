@@ -34,7 +34,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+allow_origin_regex=r"https://.*\.vercel\.app",
 app.include_router(health.router, prefix="/api")
 app.include_router(presets.router, prefix="/api")
 app.include_router(optimize.router, prefix="/api")
