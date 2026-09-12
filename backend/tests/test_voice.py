@@ -18,6 +18,7 @@ from app.db.session import db_state
 from app.explainer.intents import (
     Intent,
     classify_intent,
+    is_hypothetical_question,
     resolve_battery_status,
     resolve_critical_safe,
     resolve_diesel_now,
@@ -456,23 +457,25 @@ class TestVoiceQueryEndpoint:
         assert data["intent"] == "DIESEL_TONIGHT"
 
 
+def _parse_sse(body: str) -> list[tuple[str, dict]]:
+    events = []
+    for raw_frame in body.split("\n\n"):
+        if not raw_frame.strip() or raw_frame.startswith(":"):
+            continue
+        event_name = "message"
+        data_line = None
+        for line in raw_frame.split("\n"):
+            if line.startswith("event:"):
+                event_name = line[len("event:"):].strip()
+            elif line.startswith("data:"):
+                data_line = line[len("data:"):].strip()
+        if data_line is not None:
+            events.append((event_name, json.loads(data_line)))
+    return events
+
+
 class TestVoiceStreamEndpoint:
-    @staticmethod
-    def _parse_sse(body: str) -> list[tuple[str, dict]]:
-        events = []
-        for raw_frame in body.split("\n\n"):
-            if not raw_frame.strip() or raw_frame.startswith(":"):
-                continue
-            event_name = "message"
-            data_line = None
-            for line in raw_frame.split("\n"):
-                if line.startswith("event:"):
-                    event_name = line[len("event:"):].strip()
-                elif line.startswith("data:"):
-                    data_line = line[len("data:"):].strip()
-            if data_line is not None:
-                events.append((event_name, json.loads(data_line)))
-        return events
+    _parse_sse = staticmethod(_parse_sse)
 
     def test_unknown_run_id_returns_404(self, client):
         r = client.post("/api/voice/stream", json={
@@ -662,3 +665,150 @@ class TestSarvamTTS:
     def test_speak_endpoint_rejects_empty_text(self, client):
         r = client.post("/api/voice/speak", json={"text": "   ", "language": "en"})
         assert r.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# "General" path — hypothetical / what-if questions outside the 8 fixed
+# intents, answered via the reused /api/chat pipeline. No real Gemini calls.
+# ---------------------------------------------------------------------------
+
+HYPOTHETICAL_PHRASES = [
+    "What if there's a power cut tomorrow, how much should I charge the battery?",
+    "Suppose diesel fails tonight, what happens?",
+    "In case the generator breaks down, what should we expect?",
+    "અગર કાલે વીજળી ના હોય તો શું થાય?",
+    "ધારો કે ડીઝલ બંધ થઈ જાય તો?",
+    "अगर कल बिजली नहीं आई तो क्या होगा?",
+    "यदि जनरेटर खराब हो जाए तो?",
+]
+
+NON_HYPOTHETICAL_PHRASES = [
+    "tell me a joke",
+    "What is the meaning of life?",
+    "Is diesel on right now?",
+    "How much battery is left?",
+]
+
+
+class TestHypotheticalDetection:
+    @pytest.mark.parametrize("phrase", HYPOTHETICAL_PHRASES)
+    def test_is_hypothetical_true(self, phrase):
+        assert is_hypothetical_question(phrase) is True
+
+    @pytest.mark.parametrize("phrase", NON_HYPOTHETICAL_PHRASES)
+    def test_is_hypothetical_false(self, phrase):
+        assert is_hypothetical_question(phrase) is False
+
+    def test_hypothetical_question_bypasses_fixed_intent_keywords(self):
+        # Contains "battery" (a BATTERY_STATUS keyword) but is hypothetical —
+        # must still classify as UNKNOWN so the voice route tries the
+        # flexible /api/chat-style path instead of returning current SOC.
+        query = "What if there's a power cut tomorrow, how much should I charge the battery?"
+        assert classify_intent(query) is Intent.UNKNOWN
+
+    def test_non_hypothetical_battery_question_still_classifies_normally(self):
+        assert classify_intent("How much battery is left?") is Intent.BATTERY_STATUS
+
+
+class TestGeneralPathNonStreaming:
+    def test_hypothetical_question_answered_via_chat_pipeline(self, client):
+        _seed_run("voice-general-run-1")
+        with patch("app.core.config.settings.GEMINI_API_KEY_1", "fake-key-1"), \
+             patch(
+                 "app.api.routes.voice.generate_chat_response",
+                 return_value="If there's a power cut tomorrow, charge the battery close to its maximum before the outage.",
+             ) as mock_generate:
+            r = client.post("/api/voice/query", json={
+                "run_id": "voice-general-run-1",
+                "query": "What if there's a power cut tomorrow, how much should I charge the battery?",
+                "language": "en",
+            })
+        assert r.status_code == 200
+        data = r.json()
+        assert data["intent"] == "GENERAL"
+        assert data["confidence"] == "low"
+        assert "power cut" in data["answer"] or "battery" in data["answer"]
+        mock_generate.assert_called_once()
+        # The query + a language directive must reach the chat pipeline.
+        call_kwargs = mock_generate.call_args.kwargs
+        assert "power cut" in call_kwargs["message"]
+
+    def test_hypothetical_question_without_key_falls_back_to_template(self, client):
+        _seed_run("voice-general-run-2")
+        with patch("app.core.config.settings.GEMINI_API_KEY_1", ""):
+            r = client.post("/api/voice/query", json={
+                "run_id": "voice-general-run-2",
+                "query": "What if there's a power cut tomorrow?",
+                "language": "en",
+            })
+        assert r.status_code == 200
+        data = r.json()
+        assert data["intent"] == "UNKNOWN"
+        assert data["confidence"] == "low"
+
+    def test_hypothetical_question_chat_failure_falls_back_to_template(self, client):
+        _seed_run("voice-general-run-3")
+        with patch("app.core.config.settings.GEMINI_API_KEY_1", "fake-key-1"), \
+             patch("app.api.routes.voice.generate_chat_response", side_effect=RuntimeError("boom")):
+            r = client.post("/api/voice/query", json={
+                "run_id": "voice-general-run-3",
+                "query": "What if there's a power cut tomorrow?",
+                "language": "en",
+            })
+        assert r.status_code == 200
+        data = r.json()
+        assert data["intent"] == "UNKNOWN"
+
+
+class TestGeneralPathStreaming:
+    def test_hypothetical_question_streams_via_general_path(self, client):
+        _seed_run("voice-general-stream-1")
+
+        mock_client = MagicMock()
+
+        def _chunks():
+            for text in ["Charge the battery ", "to near full ", "before the outage."]:
+                chunk = MagicMock()
+                chunk.text = text
+                yield chunk
+
+        mock_client.models.generate_content_stream.return_value = _chunks()
+
+        with patch("app.core.config.settings.GEMINI_API_KEY_1", "fake-key-1"), \
+             patch("google.genai.Client", return_value=mock_client):
+            with client.stream("POST", "/api/voice/stream", json={
+                "run_id": "voice-general-stream-1",
+                "query": "What if there's a power cut tomorrow, how much should I charge the battery?",
+                "language": "en",
+            }) as response:
+                body = "".join(response.iter_text())
+
+        events = _parse_sse(body)
+        event_names = [name for name, _ in events]
+        assert event_names[0] == "intent"
+        assert events[0][1]["intent"] == "GENERAL"
+        assert "token" in event_names
+        assert event_names[-1] == "done"
+        done_data = events[-1][1]
+        assert done_data["validated"] is True
+        assert "battery" in done_data["answer"].lower()
+
+    def test_hypothetical_question_stream_failure_falls_back_to_template(self, client):
+        _seed_run("voice-general-stream-2")
+
+        with patch("app.core.config.settings.GEMINI_API_KEY_1", "fake-key-1"), \
+             patch("google.genai.Client", side_effect=RuntimeError("boom")):
+            with client.stream("POST", "/api/voice/stream", json={
+                "run_id": "voice-general-stream-2",
+                "query": "What if there's a power cut tomorrow?",
+                "language": "en",
+            }) as response:
+                body = "".join(response.iter_text())
+
+        events = _parse_sse(body)
+        assert events[0][1]["intent"] == "GENERAL"
+        assert events[-1][0] == "done"
+        # Fell back to the UNKNOWN example-questions template, not a
+        # partial/garbled general answer.
+        done_data = events[-1][1]
+        assert "Will diesel run tonight?" in done_data["answer"]

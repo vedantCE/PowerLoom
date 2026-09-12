@@ -28,11 +28,19 @@ from sqlmodel import Session, select
 from app.core.config import settings
 from app.db.session import get_session
 from app.explainer.gemini import _validate_response as _validate_llm_answer
-from app.explainer.intents import Intent, classify_intent, resolve_facts
+from app.explainer.intents import Intent, classify_intent, is_hypothetical_question, resolve_facts
 from app.explainer.voice_templates import build_voice_template_answer
 from app.models.scenario_run import ScenarioRun
+from app.presets.loader import load_preset
 from app.schemas.common import Language
 from app.schemas.voice import SpeakRequest, VoiceQueryRequest, VoiceQueryResponse
+from app.services.chat.context import build_powerloom_context, format_context_for_prompt
+from app.services.chat.gemini import (
+    ChatConfigurationError,
+    ChatServiceError,
+    generate_chat_response,
+)
+from app.services.chat.prompts import build_system_instruction_with_context
 from app.services.tts.sarvam import TTSUnavailableError, synthesize_speech
 
 logger = logging.getLogger(__name__)
@@ -83,6 +91,71 @@ def _load_run(run_id: str, session: Session) -> ScenarioRun:
 def _hour_index_from_facts(facts: dict) -> int | None:
     idx = facts.get("hour_index")
     return idx if isinstance(idx, int) else None
+
+
+# ---------------------------------------------------------------------------
+# "General" path — for queries outside the 8 fixed intents that are still a
+# real (usually hypothetical: "what if diesel fails tonight?") question, not
+# gibberish. Reuses the exact /api/chat pipeline (full plan context,
+# GEMINI_API_KEY_1, no per-number guard) instead of the narrow per-intent
+# facts+template flow, since a hypothetical scenario can't be answered from a
+# single hour's facts dict. Gated behind is_hypothetical_question() so a
+# genuinely unrelated query ("tell me a joke") still never calls Gemini.
+# ---------------------------------------------------------------------------
+
+GENERAL_INTENT_LABEL = "GENERAL"
+
+# The chat widget's own cap (CHAT_MAX_OUTPUT_TOKENS, ~1024) is tuned for a
+# rendered text panel with headers/bullets — wrong for an answer that must be
+# short, spoken aloud (Sarvam TTS / browser speechSynthesis), and shown in a
+# compact voice-answer card.
+_GENERAL_MAX_TOKENS = 1024
+
+
+def _build_general_context_text(response_dict: dict) -> str:
+    village_id = response_dict.get("village_id", "")
+    try:
+        preset = load_preset(village_id)
+        village_cfg_dict = preset.model_dump(mode="json") if preset else {}
+    except Exception as exc:
+        logger.warning("Could not load preset '%s' for general voice answer: %s", village_id, exc)
+        village_cfg_dict = {}
+    context_dict = build_powerloom_context(village_cfg_dict, response_dict)
+    return format_context_for_prompt(context_dict)
+
+
+def _general_message_with_language(query: str, language: Language) -> str:
+    return (
+        f"{query}\n\n"
+        f"(Answer in {_LANG_NAMES.get(language, 'English')}. This is a spoken voice assistant "
+        f"reply, not a chat window: respond in 2-4 short plain sentences, no markdown, no "
+        f"headers, no bullet points, no bold text.)"
+    )
+
+
+def _should_try_general_path(query: str) -> bool:
+    return is_hypothetical_question(query) and bool(settings.GEMINI_API_KEY_1)
+
+
+def _generate_general_answer_sync(query: str, response_dict: dict, language: Language) -> str | None:
+    """Best-effort grounded-but-flexible answer, reusing /api/chat's Gemini
+    pipeline. Returns None on ANY failure — caller falls back to the
+    UNKNOWN template; this must never raise or return an empty answer.
+    """
+    try:
+        context_text = _build_general_context_text(response_dict)
+        message = _general_message_with_language(query, language)
+        return generate_chat_response(
+            message=message,
+            context_text=context_text,
+            max_output_tokens=_GENERAL_MAX_TOKENS,
+        )
+    except (ChatConfigurationError, ChatServiceError) as exc:
+        logger.info("General voice answer unavailable: %s", exc)
+        return None
+    except Exception as exc:
+        logger.warning("Unexpected error generating general voice answer: %s", exc)
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +220,20 @@ def _cached_voice_query(
     intent = classify_intent(query)
     facts = resolve_facts(intent, response_dict, current_hour_index)
     confidence: Literal["high", "low"] = "low" if intent is Intent.UNKNOWN else "high"
+
+    if intent is Intent.UNKNOWN and _should_try_general_path(query):
+        general_answer = _generate_general_answer_sync(query, response_dict, language)
+        if general_answer is not None:
+            return VoiceQueryResponse(
+                run_id=run_id,
+                language=language,
+                intent=GENERAL_INTENT_LABEL,
+                answer=general_answer,
+                facts_used={},
+                hour_index=None,
+                confidence="low",
+            )
+
     answer = _generate_voice_answer_sync(query, intent, facts, language)
 
     return VoiceQueryResponse(
@@ -203,6 +290,86 @@ async def _stream_fallback_to_template(template_answer: str, facts: dict):
     yield _sse("done", {"answer": template_answer, "facts_used": facts, "validated": True})
 
 
+async def _stream_general_answer(
+    req: VoiceQueryRequest, response_dict: dict, request: Request, start_time: float
+):
+    """Streams a grounded-but-flexible answer via the /api/chat Gemini
+    pipeline (GEMINI_API_KEY_1, full plan context, no per-number guard).
+
+    Deliberately buffers rather than emitting "token" events as chunks
+    arrive: if generation fails partway through, there is no way to tell the
+    frontend to discard what it has already shown (the SSE contract has no
+    "reset" event), so a partial answer would otherwise end up glued to the
+    UNKNOWN fallback template. Only a fully-accumulated answer is ever
+    emitted — as one "token" event followed by "done" — and only heartbeat
+    comment lines (which carry no visible content) are sent while waiting.
+    Yields nothing at all on failure, so the caller falls back cleanly.
+    """
+    from app.services.chat.gemini import CHAT_MODEL, CHAT_TEMPERATURE
+
+    try:
+        from google import genai
+        from google.genai import types as genai_types
+    except ImportError:
+        return
+
+    try:
+        client = genai.Client(api_key=settings.GEMINI_API_KEY_1)
+    except Exception as exc:
+        logger.warning("General voice stream: Gemini client init failed: %s", exc)
+        return
+
+    context_text = _build_general_context_text(response_dict)
+    system_instruction = build_system_instruction_with_context(context_text)
+    message = _general_message_with_language(req.query, req.language)
+
+    accumulated = ""
+    last_heartbeat = time.monotonic()
+
+    try:
+        stream_iter = client.models.generate_content_stream(
+            model=CHAT_MODEL,
+            contents=message,
+            config=genai_types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=CHAT_TEMPERATURE,
+                max_output_tokens=_GENERAL_MAX_TOKENS,
+                http_options=genai_types.HttpOptions(timeout=int(_STREAM_TIMEOUT_S * 1000)),
+            ),
+        )
+        it = iter(stream_iter)
+
+        while True:
+            if time.monotonic() - start_time > _STREAM_TIMEOUT_S:
+                logger.warning("General voice stream exceeded %ss timeout", _STREAM_TIMEOUT_S)
+                return
+            if await request.is_disconnected():
+                return
+
+            chunk = await asyncio.to_thread(next, it, None)
+            if chunk is None:
+                break
+
+            chunk_text = getattr(chunk, "text", None)
+            if chunk_text:
+                accumulated += chunk_text
+
+            now = time.monotonic()
+            if now - last_heartbeat > _HEARTBEAT_INTERVAL_S:
+                yield ": heartbeat\n\n"
+                last_heartbeat = now
+
+    except Exception as exc:
+        logger.warning("General voice stream error: %s", exc)
+        return
+
+    if not accumulated.strip():
+        return
+
+    yield _sse("token", {"text": accumulated})
+    yield _sse("done", {"answer": accumulated, "facts_used": {}, "validated": True})
+
+
 async def _voice_stream_events(req: VoiceQueryRequest, response_dict: dict, request: Request):
     start_time = time.monotonic()
 
@@ -210,15 +377,30 @@ async def _voice_stream_events(req: VoiceQueryRequest, response_dict: dict, requ
     facts = resolve_facts(intent, response_dict, req.current_hour_index)
     confidence: Literal["high", "low"] = "low" if intent is Intent.UNKNOWN else "high"
     hour_idx = _hour_index_from_facts(facts)
+    try_general = intent is Intent.UNKNOWN and _should_try_general_path(req.query)
 
     # 1. Emitted immediately, before any Gemini call, so the UI can jump the
     #    charts to the relevant hour while the answer is still generating.
-    yield _sse("intent", {"intent": intent.value, "confidence": confidence, "hour_index": hour_idx})
+    #    Decidable synchronously, so a query we're about to answer via the
+    #    general/chat pipeline is honestly labelled GENERAL here rather than
+    #    UNKNOWN, even though we haven't called Gemini yet.
+    emitted_intent = GENERAL_INTENT_LABEL if try_general else intent.value
+    yield _sse("intent", {"intent": emitted_intent, "confidence": confidence, "hour_index": hour_idx})
 
     if await request.is_disconnected():
         return
 
     template_answer = build_voice_template_answer(intent, facts, req.language)
+
+    if try_general:
+        got_done = False
+        async for event in _stream_general_answer(req, response_dict, request, start_time):
+            got_done = got_done or event.startswith("event: done")
+            yield event
+        if got_done:
+            return
+        # General path produced nothing usable — fall through to the
+        # standard UNKNOWN template below.
 
     if intent is Intent.UNKNOWN:
         # No Gemini call for UNKNOWN — stream the example-questions template.

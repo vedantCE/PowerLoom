@@ -114,6 +114,28 @@ _WHAT_NOW_WORDS = [
     "अभी क्या", "अब क्या करें",
 ]
 
+# "What if" / hypothetical-scenario phrasing. Checked BEFORE the fixed-intent
+# keyword matches above so a hypothetical question always gets routed to the
+# flexible, grounded reasoning path (see routes/voice.py's reuse of the
+# /api/chat pipeline) rather than a narrow factual template — even when it
+# happens to also contain a tracked keyword like "battery" or "diesel".
+_HYPOTHETICAL_WORDS = [
+    "what if", "hypothetically", "in case", "suppose", "imagine if",
+    "agar", "agar kal", "jo kal", "maan lo", "man lo",
+    "અગર", "જો ", "ધારો કે",
+    "अगर", "यदि", "मान लीजिए", "मान लो",
+]
+
+
+def is_hypothetical_question(query: str) -> bool:
+    """True for "what if" / hypothetical-scenario phrasing (any of the three
+    languages, plus common Latin-script spellings). Used both inside
+    classify_intent (to bypass fixed-intent matching) and by the voice
+    routes (to decide whether an UNKNOWN query deserves a full grounded
+    answer instead of the static "try asking one of these" template).
+    """
+    return _matches(_norm(query), _HYPOTHETICAL_WORDS)
+
 
 def _norm(text: str) -> str:
     return text.strip().lower()
@@ -131,6 +153,9 @@ def classify_intent(query: str) -> Intent:
     fall through to the generic DIESEL_NOW bucket.
     """
     text = _norm(query)
+
+    if is_hypothetical_question(query):
+        return Intent.UNKNOWN
 
     has_diesel = _matches(text, _DIESEL_WORDS)
     has_tonight = _matches(text, _TONIGHT_WORDS)
