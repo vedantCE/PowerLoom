@@ -1,1 +1,1 @@
-export * from './SocChart'
+export { SocChart } from './SocChart'

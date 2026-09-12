@@ -262,19 +262,20 @@ def test_clear_sky_synthetic_forecast_kutch_gives_realistic_yield():
 
 
 def test_prepare_inputs_returns_profile_and_overrides():
-    village_config, forecast, profile = prepare_inputs(
+    inputs = prepare_inputs(
         session=None,
         village_id="kutch_village",
         horizon_hours=24,
         overrides=WhatIfOverrides(extra_solar_kw=5.0, cloud_cover_pct=50.0),
     )
 
-    assert village_config.id == "kutch_village"
-    assert village_config.solar.capacity_kw == 25.0
-    assert forecast.is_overridden is True
-    assert profile.horizon_hours == 24
-    assert len(profile.hours) == 24
-    assert profile.total_solar_kwh > 0.0
+    assert inputs.village.id == "kutch_village"
+    assert inputs.village.solar.capacity_kw == 25.0
+    assert inputs.horizon_hours == 24
+    assert len(inputs.timestamps) == 24
+    assert len(inputs.solar_available_kw) == 24
+    assert sum(inputs.solar_available_kw) > 0.0
+    inputs.validate()
 
 
 def test_debug_generation_endpoint():
