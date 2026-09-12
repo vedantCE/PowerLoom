@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-CHAT_MODEL = "gemini-2.5-flash"
+CHAT_MODEL = "gemini-3.6-flash"
 CHAT_TIMEOUT_S = 15.0
 CHAT_TEMPERATURE = 0.3
 CHAT_MAX_OUTPUT_TOKENS = 1024
