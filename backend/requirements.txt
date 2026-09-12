@@ -12,3 +12,4 @@ pandas
 google-genai
 python-dotenv
 pytest
+reportlab
