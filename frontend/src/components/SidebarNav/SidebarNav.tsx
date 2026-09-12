@@ -34,7 +34,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onToggle, onNavigate }) 
   }
 
   return (
-    <nav className="flex flex-col rounded-2xl bg-white p-3 shadow-lg ring-1 ring-slate-200">
+    <nav className="flex flex-col">
       {/* Header: logo + name + close button */}
       <div className="flex items-center gap-3 pb-3 px-1">
         <img src="/logo_clean.png" alt="Powerloom" className="h-10 w-10 shrink-0 object-contain" />
