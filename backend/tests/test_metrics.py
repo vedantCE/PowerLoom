@@ -96,7 +96,7 @@ def test_naive_precharges_less_than_optimizer_before_a_cloudy_day():
     horizon_hours = 48
 
     sunny_solar = [
-        max(0.0, 18.0 * (1 - abs(h - 12) / 8)) if 4 <= h <= 20 else 0.0 for h in range(24)
+        max(0.0, 12.0 * (1 - abs(h - 12) / 8)) if 4 <= h <= 20 else 0.0 for h in range(24)
     ]
     cloudy_solar = [v * 0.05 for v in sunny_solar]
     solar_available_kw = sunny_solar + cloudy_solar
