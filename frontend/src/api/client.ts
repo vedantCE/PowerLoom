@@ -1,5 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import type {
+  ChatRequest,
+  ChatResponse,
   ExplainRequest,
   ExplainResponse,
   HealthResponse,
@@ -26,6 +28,7 @@ export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 // let ExplainBox fall back to the local template generator rather than
 // leaving the shimmer up for the full 15s default request timeout.
 const EXPLAIN_TIMEOUT_MS = 6000
+const CHAT_TIMEOUT_MS = 25000
 
 // The default (non-what-if) MILP solve alone is allowed up to 20s
 // (gapRel=0.01, see solve_dispatch), plus forecast fetch and DB writes on
@@ -135,6 +138,20 @@ export async function explain(req: ExplainRequest): Promise<ExplainResponse> {
   try {
     const response = await apiClient.post<ExplainResponse>('/explain', req, {
       timeout: EXPLAIN_TIMEOUT_MS,
+    })
+    return response.data
+  } catch (err) {
+    throw new Error(formatApiError(err))
+  }
+}
+
+export async function chat(req: ChatRequest): Promise<ChatResponse> {
+  if (USE_MOCK) {
+    return mockApi.chat(req)
+  }
+  try {
+    const response = await apiClient.post<ChatResponse>('/chat', req, {
+      timeout: CHAT_TIMEOUT_MS,
     })
     return response.data
   } catch (err) {

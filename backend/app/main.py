@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session
 
-from app.api.routes import debug, explain, health, optimize, presets, runs
+from app.api.routes import chat, debug, explain, health, optimize, presets, runs
 from app.core.config import settings
 from app.db.seed import seed_presets
 from app.db.session import db_state, init_db, init_engine
@@ -41,3 +41,5 @@ app.include_router(optimize.router, prefix="/api")
 app.include_router(runs.router, prefix="/api")
 app.include_router(debug.router, prefix="/api")
 app.include_router(explain.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
+
