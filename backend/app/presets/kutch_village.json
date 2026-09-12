@@ -45,7 +45,7 @@
   "demand_components": [
     {
       "name": "household_lighting",
-      "category": "lighting",
+      "category": "household_lighting",
       "critical": false,
       "quantity": 180,
       "rated_w": 15,
@@ -54,7 +54,7 @@
     },
     {
       "name": "household_fans",
-      "category": "appliance",
+      "category": "cooling",
       "critical": false,
       "quantity": 150,
       "rated_w": 60,
@@ -63,7 +63,7 @@
     },
     {
       "name": "household_tv",
-      "category": "appliance",
+      "category": "household_appliance",
       "critical": false,
       "quantity": 80,
       "rated_w": 90,
@@ -72,7 +72,7 @@
     },
     {
       "name": "mobile_charging",
-      "category": "appliance",
+      "category": "household_appliance",
       "critical": false,
       "quantity": 200,
       "rated_w": 10,
@@ -99,7 +99,7 @@
     },
     {
       "name": "school",
-      "category": "education",
+      "category": "school",
       "critical": false,
       "quantity": 1,
       "rated_w": 2000,
@@ -117,7 +117,7 @@
     },
     {
       "name": "street_lights",
-      "category": "lighting",
+      "category": "street_lighting",
       "critical": false,
       "quantity": 40,
       "rated_w": 80,

@@ -31,7 +31,7 @@
     "wear_cost_inr_per_kwh": 2.0
   },
   "diesel": {
-    "capacity_kw": 20,
+    "capacity_kw": 11,
     "min_load_frac": 0.3,
     "fuel_intercept_l_per_h_per_kw": 0.08145,
     "fuel_slope_l_per_kwh": 0.246,
@@ -45,7 +45,7 @@
   "demand_components": [
     {
       "name": "household_lighting",
-      "category": "lighting",
+      "category": "household_lighting",
       "critical": false,
       "quantity": 130,
       "rated_w": 12,
@@ -54,7 +54,7 @@
     },
     {
       "name": "household_fans",
-      "category": "appliance",
+      "category": "cooling",
       "critical": false,
       "quantity": 90,
       "rated_w": 50,
@@ -63,7 +63,7 @@
     },
     {
       "name": "household_tv",
-      "category": "appliance",
+      "category": "household_appliance",
       "critical": false,
       "quantity": 40,
       "rated_w": 80,
@@ -72,7 +72,7 @@
     },
     {
       "name": "mobile_charging",
-      "category": "appliance",
+      "category": "household_appliance",
       "critical": false,
       "quantity": 120,
       "rated_w": 10,
@@ -99,7 +99,7 @@
     },
     {
       "name": "school",
-      "category": "education",
+      "category": "school",
       "critical": false,
       "quantity": 1,
       "rated_w": 1500,
@@ -117,7 +117,7 @@
     },
     {
       "name": "street_lights",
-      "category": "lighting",
+      "category": "street_lighting",
       "critical": false,
       "quantity": 25,
       "rated_w": 80,

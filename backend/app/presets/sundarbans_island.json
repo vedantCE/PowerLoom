@@ -5,7 +5,7 @@
     "district": "South 24 Parganas",
     "state": "West Bengal",
     "latitude": 22.16,
-    "longitude": 88.80
+    "longitude": 88.8
   },
   "solar": {
     "capacity_kw": 25,
@@ -31,7 +31,7 @@
     "wear_cost_inr_per_kwh": 2.0
   },
   "diesel": {
-    "capacity_kw": 30,
+    "capacity_kw": 36,
     "min_load_frac": 0.3,
     "fuel_intercept_l_per_h_per_kw": 0.08145,
     "fuel_slope_l_per_kwh": 0.246,
@@ -45,7 +45,7 @@
   "demand_components": [
     {
       "name": "household_lighting",
-      "category": "lighting",
+      "category": "household_lighting",
       "critical": false,
       "quantity": 220,
       "rated_w": 15,
@@ -54,7 +54,7 @@
     },
     {
       "name": "household_fans",
-      "category": "appliance",
+      "category": "cooling",
       "critical": false,
       "quantity": 200,
       "rated_w": 65,
@@ -63,7 +63,7 @@
     },
     {
       "name": "household_tv",
-      "category": "appliance",
+      "category": "household_appliance",
       "critical": false,
       "quantity": 100,
       "rated_w": 90,
@@ -72,7 +72,7 @@
     },
     {
       "name": "mobile_charging",
-      "category": "appliance",
+      "category": "household_appliance",
       "critical": false,
       "quantity": 250,
       "rated_w": 10,
@@ -99,7 +99,7 @@
     },
     {
       "name": "school",
-      "category": "education",
+      "category": "school",
       "critical": false,
       "quantity": 2,
       "rated_w": 2000,
@@ -117,7 +117,7 @@
     },
     {
       "name": "street_lights",
-      "category": "lighting",
+      "category": "street_lighting",
       "critical": false,
       "quantity": 55,
       "rated_w": 80,
