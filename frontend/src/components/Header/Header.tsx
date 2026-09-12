@@ -34,7 +34,6 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
     result,
     presentationMode,
     togglePresentationMode,
-    setShortcutsOverlayOpen,
   } = useAppStore()
 
   const isMock = import.meta.env.VITE_USE_MOCK === 'true' || result?.is_mock

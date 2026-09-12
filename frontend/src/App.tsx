@@ -290,7 +290,7 @@ export const App: React.FC = () => {
                       {/* =================================================
                           5. ENERGY MIX CHART
                           ================================================= */}
-                      <div id="energy-mix-section" className="min-w-0 overflow-x-auto">
+                      <div id="energy-mix-section" className="min-w-0">
                         <EnergyMixChart />
                       </div>
 

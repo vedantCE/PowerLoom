@@ -1,5 +1,5 @@
 import React from 'react'
-import { SlidersHorizontal, CloudRain, Sun, Fuel, BatteryCharging, Battery, FlaskConical } from 'lucide-react'
+import { SlidersHorizontal, CloudRain, Sun, Fuel, BatteryCharging, Battery, FlaskConical, ArrowRight } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { useT } from '../../i18n/strings'
 import { ScenarioChips } from './ScenarioChips'
@@ -10,7 +10,11 @@ import { CardHeader } from '../CardHeader'
 
 const IS_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
-export const WhatIfPanel: React.FC = () => {
+interface WhatIfPanelProps {
+  onNavigateToScenario?: () => void
+}
+
+export const WhatIfPanel: React.FC<WhatIfPanelProps> = ({ onNavigateToScenario }) => {
   const { t } = useT()
   const overrides = useAppStore((s) => s.overrides)
   const currentPreset = useAppStore((s) => s.currentPreset)
@@ -38,6 +42,17 @@ export const WhatIfPanel: React.FC = () => {
           icon={SlidersHorizontal}
           title={t('whatIfTitle')}
           tooltip={t('whatIfTooltip')}
+          right={
+            onNavigateToScenario ? (
+              <button
+                type="button"
+                onClick={onNavigateToScenario}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
+              >
+                More <ArrowRight className="h-3 w-3" />
+              </button>
+            ) : undefined
+          }
         />
 
         <p className="mt-3 text-xs leading-relaxed text-slate-600">{t('whatIfDescription')}</p>
