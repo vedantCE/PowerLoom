@@ -34,7 +34,6 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
     result,
     presentationMode,
     togglePresentationMode,
-    setShortcutsOverlayOpen,
   } = useAppStore()
 
   const isMock = import.meta.env.VITE_USE_MOCK === 'true' || result?.is_mock
@@ -76,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
       {/* Controls: Village, Horizon, Lang, Run */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Village Selector */}
-        <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500">
+        <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 max-w-full overflow-hidden">
           <MapPin className="mr-1.5 h-4 w-4 text-slate-400 shrink-0" />
           <select
             id="village-select"
@@ -84,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
             value={selectedVillageId ?? ''}
             onChange={(e) => selectVillage(e.target.value)}
             disabled={isLoading}
-            className="cursor-pointer bg-transparent text-sm font-semibold text-slate-800 outline-none disabled:cursor-not-allowed"
+            className="cursor-pointer bg-transparent text-xs sm:text-sm font-semibold text-slate-800 outline-none disabled:cursor-not-allowed max-w-[200px] xs:max-w-[260px] sm:max-w-[340px] truncate"
           >
             {presets.map((p) => (
               <option key={p.id} value={p.id} className="text-slate-800">

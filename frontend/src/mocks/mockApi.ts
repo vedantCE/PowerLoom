@@ -1,4 +1,6 @@
 import type {
+  ChatRequest,
+  ChatResponse,
   ExplainRequest,
   ExplainResponse,
   HealthResponse,
@@ -288,3 +290,14 @@ export async function explain(req: ExplainRequest): Promise<ExplainResponse> {
     explanation: buildTemplateExplanation(hour, lang),
   }
 }
+
+export async function chat(req: ChatRequest): Promise<ChatResponse> {
+  await simulateLatency(600, 1200)
+  return {
+    message: `[Mock AI Assistant] Thank you for asking: "${req.message}". Currently solar generation is covering demand and diesel is OFF.`,
+    village_id: req.village_id || 'dang_village',
+    run_id: req.run_id || null,
+    sources_used: ['mock_telemetry', 'mock_dispatch'],
+  }
+}
+

@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     )
 
     GEMINI_API_KEY: str = ""
+    GEMINI_API_KEY_1: str = ""
     DATABASE_URL: str = "sqlite:///./powerloom.db"
     SQLITE_FALLBACK_URL: str = "sqlite:///./powerloom.db"
     CORS_ORIGINS: str = "https://power-loom.vercel.app"

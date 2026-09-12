@@ -11,7 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCw,
-  Languages,
   Inbox,
 } from 'lucide-react'
 import { useAppStore, explanationCacheKey } from '../../store/useAppStore'
@@ -22,10 +21,6 @@ import { explain as apiExplain, USE_MOCK } from '../../api/client'
 import { buildTemplateExplanation } from '../../mocks/mockApi'
 import { useTypewriter } from '../../hooks/useTypewriter'
 import { formatDayHour, formatKw, formatPct } from '../../utils/format'
-import type { Language } from '../../types/api'
-
-const PANEL_LANGUAGES: Language[] = ['en', 'gu', 'hi']
-const PANEL_LANGUAGE_LABEL: Record<Language, string> = { en: 'EN', gu: 'ગુજ', hi: 'हिं' }
 
 export const ExplainBox: React.FC = () => {
   const { t } = useT()
@@ -37,13 +32,12 @@ export const ExplainBox: React.FC = () => {
   const explanationCache = useAppStore((s) => s.explanationCache)
   const cacheExplanation = useAppStore((s) => s.cacheExplanation)
 
-  const [panelLang, setPanelLang] = useState<Language | null>(null)
   const [loadingExplain, setLoadingExplain] = useState(false)
   const [explainError, setExplainError] = useState<string | null>(null)
   const [retryToken, setRetryToken] = useState(0)
   const [fallbackExplainKeys, setFallbackExplainKeys] = useState<Set<string>>(new Set())
 
-  const effectiveLang = panelLang ?? globalLang
+  const effectiveLang = globalLang
   const hourIndex = selectedHour
   const hour = hourIndex !== null ? result?.hourly?.find((h) => h.hour_index === hourIndex) : undefined
 
@@ -164,27 +158,6 @@ export const ExplainBox: React.FC = () => {
         tooltip={t('explainTooltip')}
         right={
           <div className="flex items-center gap-2">
-            {/* Panel-local language override */}
-            <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-0.5">
-              <Languages className="ml-1 mr-0.5 h-3 w-3 text-slate-400" />
-              {PANEL_LANGUAGES.map((lng) => (
-                <button
-                  key={lng}
-                  type="button"
-                  onClick={() => setPanelLang(lng === globalLang ? null : lng)}
-                  aria-pressed={effectiveLang === lng}
-                  title={t('panelLanguageLabel')}
-                  className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold transition-all ${
-                    effectiveLang === lng
-                      ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
-                      : 'text-slate-500 hover:text-slate-800'
-                  }`}
-                >
-                  {PANEL_LANGUAGE_LABEL[lng]}
-                </button>
-              ))}
-            </div>
-
             {/* Selected Hour Pill + Prev/Next */}
             <div className="flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50/70 px-1 py-1 text-xs font-bold text-indigo-900">
               <button

@@ -217,3 +217,27 @@ export interface ScenarioRunSummary {
   total_cost_inr: number
   cost_saved_inr: number | null
 }
+
+// --- chat.py ---
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string
+}
+
+export interface ChatRequest {
+  message: string
+  village_id?: string | null
+  run_id?: string | null
+  horizon_hours?: 24 | 48
+  overrides?: WhatIfOverrides | null
+  history?: ChatMessage[]
+}
+
+export interface ChatResponse {
+  message: string
+  village_id: string
+  run_id?: string | null
+  sources_used?: string[]
+}
+
