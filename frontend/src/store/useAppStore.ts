@@ -68,6 +68,7 @@ export interface AppState {
 
   // Presentation / UX chrome
   presentationMode: boolean
+  operatorMode: boolean
   shortcutsOverlayOpen: boolean
   toasts: ToastMessage[]
 
@@ -100,6 +101,7 @@ export interface AppState {
   clearCompareRuns: () => void
 
   togglePresentationMode: () => void
+  toggleOperatorMode: () => void
   setShortcutsOverlayOpen: (open: boolean) => void
   pushToast: (type: ToastType, message: string) => void
   dismissToast: (id: string) => void
@@ -133,6 +135,24 @@ function newId(): string {
     : `id-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
+const OPERATOR_MODE_STORAGE_KEY = 'powerloom.operatorMode'
+
+function loadOperatorModePreference(): boolean {
+  try {
+    return localStorage.getItem(OPERATOR_MODE_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function saveOperatorModePreference(value: boolean): void {
+  try {
+    localStorage.setItem(OPERATOR_MODE_STORAGE_KEY, String(value))
+  } catch {
+    // Private browsing / storage disabled — preference just won't persist.
+  }
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   presets: [],
   selectedVillageId: null,
@@ -155,6 +175,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   compareRunIds: [],
 
   presentationMode: false,
+  operatorMode: loadOperatorModePreference(),
   shortcutsOverlayOpen: false,
   toasts: [],
 
@@ -375,6 +396,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   clearCompareRuns: () => set({ compareRunIds: [] }),
 
   togglePresentationMode: () => set((state) => ({ presentationMode: !state.presentationMode })),
+
+  toggleOperatorMode: () =>
+    set((state) => {
+      const next = !state.operatorMode
+      saveOperatorModePreference(next)
+      return { operatorMode: next }
+    }),
 
   setShortcutsOverlayOpen: (open: boolean) => set({ shortcutsOverlayOpen: open }),
 

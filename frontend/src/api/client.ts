@@ -16,7 +16,19 @@ export const apiClient = axios.create({
   timeout: 15000,
 })
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
+export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
+
+// The explain endpoint targets a sub-3s response (Gemini call); fail fast and
+// let ExplainBox fall back to the local template generator rather than
+// leaving the shimmer up for the full 15s default request timeout.
+const EXPLAIN_TIMEOUT_MS = 6000
+
+// The default (non-what-if) MILP solve alone is allowed up to 20s
+// (gapRel=0.01, see solve_dispatch), plus forecast fetch and DB writes on
+// top of that — longer than the client's 15s default timeout. Give /optimize
+// enough headroom that a legitimately slow solve doesn't get killed client-side
+// before the backend's own 20s solver budget does.
+const OPTIMIZE_TIMEOUT_MS = 30000
 
 export function formatApiError(err: unknown): string {
   if (err instanceof AxiosError) {
@@ -89,7 +101,9 @@ export async function optimize(req: OptimizeRequest): Promise<OptimizeResponse> 
     return mockApi.optimize(req)
   }
   try {
-    const response = await apiClient.post<OptimizeResponse>('/optimize', req)
+    const response = await apiClient.post<OptimizeResponse>('/optimize', req, {
+      timeout: OPTIMIZE_TIMEOUT_MS,
+    })
     return response.data
   } catch (err) {
     throw new Error(formatApiError(err))
@@ -115,7 +129,9 @@ export async function explain(req: ExplainRequest): Promise<ExplainResponse> {
     return mockApi.explain(req)
   }
   try {
-    const response = await apiClient.post<ExplainResponse>('/explain', req)
+    const response = await apiClient.post<ExplainResponse>('/explain', req, {
+      timeout: EXPLAIN_TIMEOUT_MS,
+    })
     return response.data
   } catch (err) {
     throw new Error(formatApiError(err))

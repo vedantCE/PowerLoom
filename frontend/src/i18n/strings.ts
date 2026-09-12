@@ -67,6 +67,11 @@ export const STRINGS = {
     co2Avoided: 'CO₂ Avoided',
     cleanUptime: 'Clean Uptime',
     criticalUptimeNote: '100% critical power secured',
+    hrsUnit: 'hrs',
+    hoursLessSuffix: 'h run',
+    co2OffsetBadge: 'CO₂ offset',
+    cleanerAirNote: 'Cleaner air for village microgrid',
+    zeroBlackoutBadge: 'Zero blackout',
 
     // Placeholders
     energyFlowTitle: 'Real-Time Energy Flow',
@@ -90,7 +95,7 @@ export const STRINGS = {
     flowEmptyHint: 'Run optimization to see the live energy flow for this village.',
     flowReducedMotionNote: 'Motion reduced — showing a static diagram.',
 
-    energyMixTitle: 'Energy Mix Dispatch (48h)',
+    energyMixTitle: 'Energy Mix Dispatch',
     energyMixBadge: 'Phase 4.2',
     energyMixDesc: 'Stacked area chart illustrating hourly supply allocation across solar, wind, battery, and diesel.',
     socChartTitle: 'Battery State of Charge (SOC)',
@@ -111,7 +116,7 @@ export const STRINGS = {
     explainTooltip: 'Plain-language explanation of why the optimizer dispatched power this way, for the selected hour.',
     explainLoading: 'Generating plain-language explanation...',
     explainEmptyPrompt: 'Pick an hour on the timeline or energy flow to see why the optimizer made this choice.',
-    offlineExplanationNote: 'Offline explanation — the AI explainer service is not available yet.',
+    explainFallbackNote: 'Simplified explanation (AI service unavailable right now).',
     panelLanguageLabel: 'Panel language',
     prevHour: 'Previous hour',
     nextHour: 'Next hour',
@@ -135,6 +140,9 @@ export const STRINGS = {
     emptyTitle: 'No Plan Available',
     emptyDesc: 'Please select a village and click Run Optimization to begin.',
     close: 'Close',
+    errorBoundaryTitle: 'Dashboard encountered an unexpected error',
+    errorBoundaryDefaultMessage: 'A render issue occurred in this section.',
+    tryAgain: 'Try again',
 
     // Run History (Phase 4.5)
     runHistoryTitle: 'Run History',
@@ -153,6 +161,14 @@ export const STRINGS = {
 
     // Presentation mode & keyboard shortcuts (Phase 4.5)
     presentationModeToggle: 'Presentation mode',
+    operatorViewLabel: 'Operator view',
+    analystViewLabel: 'Analyst view',
+    operatorViewToggleTooltip: 'Switch to a simple view for the person running the microgrid day-to-day.',
+    operatorAdviceTitle: 'What should I do now?',
+    operatorNextHoursTitle: 'Next 6 hours',
+    operatorSavingsTitle: "Today's savings",
+    operatorSavingsSub: 'vs running on diesel alone',
+    operatorEmptyPrompt: 'Run optimization to see today’s guidance.',
     scTitle: 'Keyboard Shortcuts',
     scPlayPause: 'Play / pause energy flow',
     scPrevNextHour: 'Previous / next hour',
@@ -268,6 +284,11 @@ export const STRINGS = {
     co2Avoided: 'CO₂ ઉત્સર્જન ઘટાડ્યું',
     cleanUptime: 'ક્લીન અપટાઇમ',
     criticalUptimeNote: '૧૦૦% મહત્વપૂર્ણ પાવર સુરક્ષિત',
+    hrsUnit: 'કલાક',
+    hoursLessSuffix: 'કલાક ઓછું',
+    co2OffsetBadge: 'CO₂ ઘટાડો',
+    cleanerAirNote: 'ગામના માઇક્રોગ્રીડ માટે સ્વચ્છ હવા',
+    zeroBlackoutBadge: 'શૂન્ય બ્લેકઆઉટ',
 
     // Placeholders
     energyFlowTitle: 'રીઅલ-ટાઇમ ઊર્જા પ્રવાહ',
@@ -291,7 +312,7 @@ export const STRINGS = {
     flowEmptyHint: 'આ ગામ માટે લાઈવ ઊર્જા પ્રવાહ જોવા માટે ઑપ્ટિમાઇઝ કરો.',
     flowReducedMotionNote: 'ગતિ ઘટાડેલ છે — સ્થિર આકૃતિ બતાવવામાં આવી રહી છે.',
 
-    energyMixTitle: 'ઊર્જા વિતરણ ચાર્ટ (૪૮ કલાક)',
+    energyMixTitle: 'ઊર્જા વિતરણ ચાર્ટ',
     energyMixBadge: 'ફેઝ ૪.૨',
     energyMixDesc: 'કલાકદીઠ સોલર, પવન, બેટરી અને ડીઝલ વીજળીનો ચાર્ટ.',
     socChartTitle: 'બેટરી ચાર્જ સ્તર (SOC)',
@@ -311,7 +332,7 @@ export const STRINGS = {
     explainSubtitle: 'પસંદ કરેલા કલાક માટે આ વિતરણ કેમ પસંદ કરાયું તેની સરળ સમજૂતી',
     explainLoading: 'સમજૂતી તૈયાર થઈ રહી છે...',
     explainTooltip: 'પસંદ કરેલા કલાક માટે ઑપ્ટિમાઇઝરે આ રીતે વીજ વિતરણ કેમ કર્યું તેની સાદી ભાષામાં સમજૂતી.',
-    offlineExplanationNote: 'ઓફલાઇન સમજૂતી — AI સમજૂતી સેવા હજુ ઉપલબ્ધ નથી.',
+    explainFallbackNote: 'સરળ સમજૂતી (AI સેવા હાલ ઉપલબ્ધ નથી).',
     explainEmptyPrompt: 'ઑપ્ટિમાઇઝરનો નિર્ણય જોવા માટે સમયરેખા અથવા ઊર્જા પ્રવાહ પર કોઈ કલાક પસંદ કરો.',
     panelLanguageLabel: 'પેનલ ભાષા',
     prevHour: 'પાછલો કલાક',
@@ -336,6 +357,9 @@ export const STRINGS = {
     emptyTitle: 'કોઈ યોજના ઉપલબ્ધ નથી',
     emptyDesc: 'કૃપા કરીને ગામ પસંદ કરો અને ઑપ્ટિમાઇઝ કરો બટન દબાવો.',
     close: 'બંધ કરો',
+    errorBoundaryTitle: 'ડેશબોર્ડમાં અણધારી ભૂલ આવી',
+    errorBoundaryDefaultMessage: 'આ વિભાગમાં પ્રદર્શન સંબંધિત સમસ્યા આવી.',
+    tryAgain: 'ફરી પ્રયાસ કરો',
 
     // Run History (Phase 4.5)
     runHistoryTitle: 'રન ઇતિહાસ',
@@ -354,6 +378,14 @@ export const STRINGS = {
 
     // Presentation mode & keyboard shortcuts (Phase 4.5)
     presentationModeToggle: 'પ્રેઝન્ટેશન મોડ',
+    operatorViewLabel: 'ઓપરેટર દૃશ્ય',
+    analystViewLabel: 'એનાલિસ્ટ દૃશ્ય',
+    operatorViewToggleTooltip: 'માઇક્રોગ્રીડ ચલાવનાર વ્યક્તિ માટે સરળ દૃશ્ય પર સ્વિચ કરો.',
+    operatorAdviceTitle: 'મારે હવે શું કરવું જોઈએ?',
+    operatorNextHoursTitle: 'આગામી ૬ કલાક',
+    operatorSavingsTitle: 'આજની બચત',
+    operatorSavingsSub: 'ફક્ત ડીઝલ પર ચલાવવા સામે',
+    operatorEmptyPrompt: 'આજની સૂચના જોવા માટે ઑપ્ટિમાઇઝ કરો.',
     scTitle: 'કીબોર્ડ શોર્ટકટ્સ',
     scPlayPause: 'ઊર્જા પ્રવાહ ચલાવો / થોભાવો',
     scPrevNextHour: 'પાછલો / આગળનો કલાક',
@@ -469,6 +501,11 @@ export const STRINGS = {
     co2Avoided: 'CO₂ उत्सर्जन रोका',
     cleanUptime: 'स्वच्छ अपटाइम',
     criticalUptimeNote: '100% महत्वपूर्ण बिजली सुरक्षित',
+    hrsUnit: 'घंटे',
+    hoursLessSuffix: 'घंटे कम',
+    co2OffsetBadge: 'CO₂ में कमी',
+    cleanerAirNote: 'गाँव के माइक्रोग्रिड के लिए स्वच्छ हवा',
+    zeroBlackoutBadge: 'शून्य ब्लैकआउट',
 
     // Placeholders
     energyFlowTitle: 'वास्तविक समय ऊर्जा प्रवाह',
@@ -492,7 +529,7 @@ export const STRINGS = {
     flowEmptyHint: 'इस गाँव के लिए लाइव ऊर्जा प्रवाह देखने हेतु अनुकूलन चलाएँ।',
     flowReducedMotionNote: 'गति कम की गई — स्थिर आरेख दिखाया जा रहा है।',
 
-    energyMixTitle: 'ऊर्जा प्रेषण मिश्रण (48 घंटे)',
+    energyMixTitle: 'ऊर्जा प्रेषण मिश्रण',
     energyMixBadge: 'चरण 4.2',
     energyMixDesc: 'सौर, पवन, बैटरी और डीजल की प्रति घंटा आपूर्ति दर्शाने वाला चार्ट।',
     socChartTitle: 'बैटरी चार्ज स्थिति (SOC)',
@@ -511,7 +548,7 @@ export const STRINGS = {
     explainTitle: 'निर्णय स्पष्टीकरण',
     explainSubtitle: 'चुने गए घंटे के लिए इस ऊर्जा मिश्रण को चुनने का सरल भाषा में कारण',
     explainLoading: 'स्पष्टीकरण तैयार हो रहा है...',
-    offlineExplanationNote: 'ऑफ़लाइन स्पष्टीकरण — AI स्पष्टीकरण सेवा अभी उपलब्ध नहीं है।',
+    explainFallbackNote: 'सरल स्पष्टीकरण (AI सेवा अभी उपलब्ध नहीं है).',
     explainTooltip: 'चुने गए घंटे के लिए ऑप्टिमाइज़र ने बिजली इस तरह क्यों बाँटी, इसका सरल भाषा में स्पष्टीकरण।',
     explainEmptyPrompt: 'ऑप्टिमाइज़र का निर्णय देखने के लिए समयरेखा या ऊर्जा प्रवाह पर कोई घंटा चुनें।',
     panelLanguageLabel: 'पैनल भाषा',
@@ -537,6 +574,9 @@ export const STRINGS = {
     emptyTitle: 'कोई योजना उपलब्ध नहीं',
     emptyDesc: 'कृपया गाँव चुनें और अनुकूलन चलाएँ पर क्लिक करें।',
     close: 'बंद करें',
+    errorBoundaryTitle: 'डैशबोर्ड में एक अप्रत्याशित त्रुटि हुई',
+    errorBoundaryDefaultMessage: 'इस सेक्शन में प्रदर्शन संबंधी समस्या हुई।',
+    tryAgain: 'पुनः प्रयास करें',
 
     // Run History (Phase 4.5)
     runHistoryTitle: 'रन इतिहास',
@@ -555,6 +595,14 @@ export const STRINGS = {
 
     // Presentation mode & keyboard shortcuts (Phase 4.5)
     presentationModeToggle: 'प्रेजेंटेशन मोड',
+    operatorViewLabel: 'ऑपरेटर दृश्य',
+    analystViewLabel: 'विश्लेषक दृश्य',
+    operatorViewToggleTooltip: 'माइक्रोग्रिड चलाने वाले व्यक्ति के लिए सरल दृश्य पर स्विच करें।',
+    operatorAdviceTitle: 'मुझे अभी क्या करना चाहिए?',
+    operatorNextHoursTitle: 'अगले 6 घंटे',
+    operatorSavingsTitle: 'आज की बचत',
+    operatorSavingsSub: 'केवल डीजल पर चलाने की तुलना में',
+    operatorEmptyPrompt: 'आज का मार्गदर्शन देखने के लिए अनुकूलन चलाएँ।',
     scTitle: 'कीबोर्ड शॉर्टकट',
     scPlayPause: 'ऊर्जा प्रवाह चलाएँ / रोकें',
     scPrevNextHour: 'पिछला / अगला घंटा',

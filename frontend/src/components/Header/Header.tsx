@@ -9,6 +9,8 @@ import {
   Sparkles,
   Presentation,
   Keyboard,
+  UserCog,
+  LayoutDashboard,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { useT } from '../../i18n/strings'
@@ -29,6 +31,8 @@ export const Header: React.FC = () => {
     result,
     presentationMode,
     togglePresentationMode,
+    operatorMode,
+    toggleOperatorMode,
     setShortcutsOverlayOpen,
   } = useAppStore()
 
@@ -153,6 +157,40 @@ export const Header: React.FC = () => {
             </>
           )}
         </button>
+
+        {/* Operator / Analyst mode */}
+        <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-1">
+          <button
+            type="button"
+            id="analyst-view-btn"
+            onClick={() => operatorMode && toggleOperatorMode()}
+            aria-pressed={!operatorMode}
+            title={t('operatorViewToggleTooltip')}
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+              !operatorMode
+                ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <LayoutDashboard className="h-3.5 w-3.5" />
+            {t('analystViewLabel')}
+          </button>
+          <button
+            type="button"
+            id="operator-view-btn"
+            onClick={() => !operatorMode && toggleOperatorMode()}
+            aria-pressed={operatorMode}
+            title={t('operatorViewToggleTooltip')}
+            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
+              operatorMode
+                ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <UserCog className="h-3.5 w-3.5" />
+            {t('operatorViewLabel')}
+          </button>
+        </div>
 
         {/* Presentation mode + shortcuts help */}
         <div className="flex items-center gap-1">

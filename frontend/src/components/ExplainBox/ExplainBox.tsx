@@ -18,7 +18,7 @@ import { useAppStore, explanationCacheKey } from '../../store/useAppStore'
 import { useT } from '../../i18n/strings'
 import { REASON_CODE_LABELS } from '../../i18n/index'
 import { CardHeader } from '../CardHeader'
-import { explain as apiExplain } from '../../api/client'
+import { explain as apiExplain, USE_MOCK } from '../../api/client'
 import { buildTemplateExplanation } from '../../mocks/mockApi'
 import { useTypewriter } from '../../hooks/useTypewriter'
 import { formatDayHour, formatKw, formatPct } from '../../utils/format'
@@ -41,7 +41,7 @@ export const ExplainBox: React.FC = () => {
   const [loadingExplain, setLoadingExplain] = useState(false)
   const [explainError, setExplainError] = useState<string | null>(null)
   const [retryToken, setRetryToken] = useState(0)
-  const [offlineExplainKeys, setOfflineExplainKeys] = useState<Set<string>>(new Set())
+  const [fallbackExplainKeys, setFallbackExplainKeys] = useState<Set<string>>(new Set())
 
   const effectiveLang = panelLang ?? globalLang
   const hourIndex = selectedHour
@@ -66,12 +66,18 @@ export const ExplainBox: React.FC = () => {
       .then((res) => {
         if (cancelled) return
         cacheExplanation(cacheKey, res)
+        // Mock mode never talks to the real Gemini-backed endpoint (mockApi.explain
+        // already returns template text) — mark it the same as a fallback so the
+        // UI doesn't imply this came from the live AI explainer.
+        if (USE_MOCK) {
+          setFallbackExplainKeys((prev) => new Set(prev).add(cacheKey))
+        }
       })
       .catch(() => {
         if (cancelled) return
-        // POST /api/explain is not implemented on the backend yet (next
-        // backend phase) — fall back to the same offline template generator
-        // mock mode uses, rather than showing a hard error for every hour.
+        // Real request failed or timed out (see EXPLAIN_TIMEOUT_MS in
+        // api/client.ts) — fall back to the local template generator rather
+        // than showing a hard error for every hour.
         if (!hour) {
           setExplainError('Could not load explanation')
           return
@@ -83,7 +89,7 @@ export const ExplainBox: React.FC = () => {
           reason_codes: hour.reason_codes,
           explanation: buildTemplateExplanation(hour, effectiveLang),
         })
-        setOfflineExplainKeys((prev) => new Set(prev).add(cacheKey))
+        setFallbackExplainKeys((prev) => new Set(prev).add(cacheKey))
       })
       .finally(() => {
         if (!cancelled) setLoadingExplain(false)
@@ -192,7 +198,7 @@ export const ExplainBox: React.FC = () => {
               </button>
               <span className="flex items-center gap-1 px-1">
                 <Clock className="h-3.5 w-3.5 text-indigo-600" />
-                {t('selectedHour')} {hour.hour_index} &middot; {formatDayHour(hour.timestamp, hour.hour_index)}
+                {t('selectedHour')} {hour.hour_index} &middot; {formatDayHour(hour.timestamp, hour.hour_index, effectiveLang)}
               </span>
               <button
                 type="button"
@@ -282,9 +288,10 @@ export const ExplainBox: React.FC = () => {
       {/* Natural Language Explanation Box */}
       <div className="mt-4 min-h-[64px] rounded-xl border border-indigo-100 bg-white p-4 shadow-2xs">
         {loadingExplain ? (
-          <div className="flex items-center gap-3 text-slate-500 text-sm py-1">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
-            <span>{t('explainLoading')}</span>
+          <div className="space-y-2 py-0.5" aria-live="polite" aria-label={t('explainLoading')}>
+            <div className="h-3.5 w-full animate-pulse rounded bg-slate-200" />
+            <div className="h-3.5 w-5/6 animate-pulse rounded bg-slate-200" />
+            <div className="h-3.5 w-2/3 animate-pulse rounded bg-slate-100" />
           </div>
         ) : explainError ? (
           <div className="flex items-center justify-between gap-2">
@@ -309,10 +316,10 @@ export const ExplainBox: React.FC = () => {
                 <span className="ml-0.5 inline-block h-3.5 w-1.5 animate-pulse bg-indigo-400 align-middle" />
               )}
             </p>
-            {cacheKey && offlineExplainKeys.has(cacheKey) && (
-              <p className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-amber-600">
+            {cacheKey && fallbackExplainKeys.has(cacheKey) && (
+              <p className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
                 <AlertTriangle className="h-3 w-3" />
-                {t('offlineExplanationNote')}
+                {t('explainFallbackNote')}
               </p>
             )}
           </>

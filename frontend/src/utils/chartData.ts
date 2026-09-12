@@ -1,4 +1,4 @@
-import type { HourlyDispatch, ReasonCode } from '../types/api'
+import type { HourlyDispatch, Language, ReasonCode } from '../types/api'
 import { formatHourTick } from './format'
 
 export interface MixSeriesPoint {
@@ -114,7 +114,8 @@ export function dominantSource(hour: HourlyDispatch): DominantSourceType {
  */
 export function toMixSeries(
   hourly: HourlyDispatch[],
-  naiveHourly?: HourlyDispatch[]
+  naiveHourly?: HourlyDispatch[],
+  language: Language = 'en'
 ): MixSeriesPoint[] {
   if (!hourly || hourly.length === 0) return []
   const startDate = getKolkataDateString(hourly[0].timestamp)
@@ -131,7 +132,7 @@ export function toMixSeries(
     const naivePoint = naiveMap.get(h.hour_index)
 
     return {
-      label: formatHourTick(h.hour_index, h.timestamp),
+      label: formatHourTick(h.hour_index, h.timestamp, language),
       timestamp: h.timestamp,
       hour_index: h.hour_index,
       solar_used_kw: Number(h.solar_used_kw.toFixed(3)),
@@ -157,7 +158,8 @@ export function toMixSeries(
  */
 export function toSocSeries(
   hourly: HourlyDispatch[],
-  baselineHourly?: HourlyDispatch[]
+  baselineHourly?: HourlyDispatch[],
+  language: Language = 'en'
 ): SocSeriesPoint[] {
   if (!hourly || hourly.length === 0) return []
   const startDate = getKolkataDateString(hourly[0].timestamp)
@@ -174,7 +176,7 @@ export function toSocSeries(
     const baselinePoint = baselineMap.get(h.hour_index)
 
     return {
-      label: formatHourTick(h.hour_index, h.timestamp),
+      label: formatHourTick(h.hour_index, h.timestamp, language),
       timestamp: h.timestamp,
       hour_index: h.hour_index,
       soc_pct: Number((h.soc * 100).toFixed(2)),

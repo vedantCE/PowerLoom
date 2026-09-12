@@ -80,10 +80,10 @@ export const SavingsCards: React.FC = () => {
         </div>
         <div className="mt-2.5 flex items-baseline gap-2">
           <span className="text-2xl font-extrabold tracking-tight text-slate-900">
-            {dieselHoursVal.toFixed(1)} hrs
+            {dieselHoursVal.toFixed(1)} {t('hrsUnit')}
           </span>
           <span className="inline-flex items-center rounded-md bg-rose-100 px-1.5 py-0.5 text-xs font-bold text-rose-800">
-            -{dieselHoursVal.toFixed(0)}h run
+            -{dieselHoursVal.toFixed(0)}{t('hoursLessSuffix')}
           </span>
         </div>
         <p className="mt-1.5 text-xs text-slate-600 font-medium">
@@ -109,11 +109,11 @@ export const SavingsCards: React.FC = () => {
             {co2Val.toFixed(1)} kg
           </span>
           <span className="inline-flex items-center rounded-md bg-sky-100 px-1.5 py-0.5 text-xs font-bold text-sky-800">
-            CO₂ offset
+            {t('co2OffsetBadge')}
           </span>
         </div>
         <p className="mt-1.5 text-xs text-slate-600 font-medium">
-          Cleaner air for village microgrid
+          {t('cleanerAirNote')}
         </p>
       </div>
 
@@ -135,7 +135,7 @@ export const SavingsCards: React.FC = () => {
             {formatPct(uptimeVal)}
           </span>
           <span className="inline-flex items-center rounded-md bg-indigo-100 px-1.5 py-0.5 text-xs font-bold text-indigo-800">
-            Zero blackout
+            {t('zeroBlackoutBadge')}
           </span>
         </div>
         <p className="mt-1.5 text-xs text-slate-600 font-medium">

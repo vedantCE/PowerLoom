@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+@theme {
+  /* Single stack for all 3 languages: browsers select the right font per
+     character run, so Latin, Gujarati and Devanagari all render correctly
+     even when a sentence (or a code-switched string like "Solar (સૌર)")
+     mixes scripts — no per-language class swap needed for the base font. */
+  --font-sans: 'Noto Sans', 'Noto Sans Gujarati', 'Noto Sans Devanagari', ui-sans-serif,
+    system-ui, sans-serif;
+}
+
+/* Gujarati and Devanagari glyphs run taller than Latin (conjuncts, matras) —
+   a Latin-tuned line-height clips or crowds them, so both scripts get more
+   vertical breathing room app-wide. */
+:lang(gu),
+:lang(hi) {
+  line-height: 1.6;
+}
