@@ -39,11 +39,41 @@ pytest
 ```bash
 cd frontend
 npm install
+cp .env.example .env    # VITE_USE_MOCK=false by default — talks to the real backend
 npm run dev
 ```
 
 Open http://localhost:5173. The dev server proxies `/api` requests to the backend on port 8000,
 so start the backend first (or alongside).
+
+## Running both servers together
+
+The frontend runs against the real backend by default (`VITE_USE_MOCK=false`). To use the app
+end-to-end:
+
+```bash
+# Terminal 1 — backend
+cd backend
+source .venv/bin/activate
+uvicorn app.main:app --reload --port 8000
+
+# Terminal 2 — frontend
+cd frontend
+npm run dev
+```
+
+Then open http://localhost:5173. The header shows a "Live Backend" badge (with the active
+database — `postgresql` or `sqlite`) once the first optimization run completes.
+
+If you want to work on the UI without a backend running (e.g. offline, or the backend isn't
+ready yet), set `VITE_USE_MOCK=true` in `frontend/.env` and restart `npm run dev` — every API
+call is served from the static fixtures in `frontend/src/mocks/`, and the header shows a
+"Mock Data" badge instead.
+
+Note: `POST /api/explain` is not implemented on the backend yet. Against the real backend, the
+Optimizer Decision Explainer panel automatically falls back to the same offline template-based
+explanation generator mock mode uses, with a small "offline explanation" note — this is expected
+until the Gemini-based explainer backend phase lands.
 
 ## Project structure
 

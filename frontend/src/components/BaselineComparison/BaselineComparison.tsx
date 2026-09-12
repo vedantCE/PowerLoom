@@ -1,19 +1,11 @@
 import React, { useMemo } from 'react'
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  Cell,
-} from 'recharts'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell } from 'recharts'
+import { Scale, TrendingDown } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
-import { CHART_COLORS } from '../../theme/colors'
-import { formatInr, formatCo2 } from '../../utils/format'
-import { useT } from '../../i18n/useT'
-import { IndianRupee, Clock, Leaf, TrendingDown } from 'lucide-react'
+import { useT } from '../../i18n/strings'
+import { ENERGY_COLORS } from '../../theme/colors'
+import { formatINR, formatCo2 } from '../../utils/format'
+import { CardHeader } from '../CardHeader'
 
 interface StrategyMetric {
   name: string
@@ -22,135 +14,74 @@ interface StrategyMetric {
   color: string
 }
 
+const TOOLTIP_STYLE = {
+  backgroundColor: '#ffffff',
+  border: '1px solid #e2e8f0',
+  borderRadius: 8,
+  fontSize: 12,
+  color: '#0f172a',
+}
+
 export const BaselineComparison: React.FC = () => {
+  const { t } = useT()
   const result = useAppStore((s) => s.result)
   const status = useAppStore((s) => s.status)
-  const { t } = useT()
 
-  const naive = useMemo(
-    () => result?.baselines?.find((b) => b.strategy === 'naive'),
-    [result]
-  )
+  const naive = useMemo(() => result?.baselines?.find((b) => b.strategy === 'naive'), [result])
+  const cycle = useMemo(() => result?.baselines?.find((b) => b.strategy === 'cycle_charging'), [result])
 
-  const cycle = useMemo(
-    () => result?.baselines?.find((b) => b.strategy === 'cycle_charging'),
-    [result]
-  )
-
-  const costData = useMemo<StrategyMetric[]>(() => {
+  const build = (
+    pick: (summary: { total_cost_inr: number; diesel_hours: number; co2_kg: number }) => number,
+    decimals: number
+  ): StrategyMetric[] => {
     if (!result?.summary) return []
     const items: StrategyMetric[] = [
       {
         name: 'powerloom',
         label: t('strategyPowerloom'),
-        value: Math.round(result.summary.total_cost_inr),
-        color: CHART_COLORS.batteryDischarge,
+        value: Number(pick(result.summary).toFixed(decimals)),
+        color: ENERGY_COLORS.battery,
       },
     ]
     if (naive) {
       items.push({
         name: 'naive',
         label: t('strategyNaive'),
-        value: Math.round(naive.summary.total_cost_inr),
-        color: CHART_COLORS.baselineNaive,
+        value: Number(pick(naive.summary).toFixed(decimals)),
+        color: '#94a3b8',
       })
     }
     if (cycle) {
       items.push({
         name: 'cycle_charging',
         label: t('strategyCycle'),
-        value: Math.round(cycle.summary.total_cost_inr),
-        color: CHART_COLORS.baselineCycle,
+        value: Number(pick(cycle.summary).toFixed(decimals)),
+        color: '#a855f7',
       })
     }
     return items
-  }, [result, naive, cycle, t])
+  }
 
-  const hoursData = useMemo<StrategyMetric[]>(() => {
-    if (!result?.summary) return []
-    const items: StrategyMetric[] = [
-      {
-        name: 'powerloom',
-        label: t('strategyPowerloom'),
-        value: Number(result.summary.diesel_hours.toFixed(1)),
-        color: CHART_COLORS.batteryDischarge,
-      },
-    ]
-    if (naive) {
-      items.push({
-        name: 'naive',
-        label: t('strategyNaive'),
-        value: Number(naive.summary.diesel_hours.toFixed(1)),
-        color: CHART_COLORS.baselineNaive,
-      })
-    }
-    if (cycle) {
-      items.push({
-        name: 'cycle_charging',
-        label: t('strategyCycle'),
-        value: Number(cycle.summary.diesel_hours.toFixed(1)),
-        color: CHART_COLORS.baselineCycle,
-      })
-    }
-    return items
-  }, [result, naive, cycle, t])
+  // Trivial O(3) work — not worth memoizing, so `build` doesn't need a stable identity.
+  const costData = build((s) => s.total_cost_inr, 0)
+  const hoursData = build((s) => s.diesel_hours, 1)
+  const co2Data = build((s) => s.co2_kg, 1)
 
-  const co2Data = useMemo<StrategyMetric[]>(() => {
-    if (!result?.summary) return []
-    const items: StrategyMetric[] = [
-      {
-        name: 'powerloom',
-        label: t('strategyPowerloom'),
-        value: Number(result.summary.co2_kg.toFixed(1)),
-        color: CHART_COLORS.batteryDischarge,
-      },
-    ]
-    if (naive) {
-      items.push({
-        name: 'naive',
-        label: t('strategyNaive'),
-        value: Number(naive.summary.co2_kg.toFixed(1)),
-        color: CHART_COLORS.baselineNaive,
-      })
-    }
-    if (cycle) {
-      items.push({
-        name: 'cycle_charging',
-        label: t('strategyCycle'),
-        value: Number(cycle.summary.co2_kg.toFixed(1)),
-        color: CHART_COLORS.baselineCycle,
-      })
-    }
-    return items
-  }, [result, naive, cycle, t])
-
-  // Savings calculations vs naive
   const costSavingsPct = useMemo(() => {
     if (!result?.summary || !naive) return null
     const diff = naive.summary.total_cost_inr - result.summary.total_cost_inr
-    const pct = (diff / naive.summary.total_cost_inr) * 100
-    return Math.max(0, Number(pct.toFixed(1)))
+    return Math.max(0, Number(((diff / naive.summary.total_cost_inr) * 100).toFixed(1)))
   }, [result, naive])
 
-  const hoursSaved = useMemo(() => {
-    if (!result?.summary || !naive) return null
-    return Math.max(0, Number((naive.summary.diesel_hours - result.summary.diesel_hours).toFixed(1)))
-  }, [result, naive])
-
-  const co2Saved = useMemo(() => {
-    if (!result?.summary || !naive) return null
-    return Math.max(0, Number((naive.summary.co2_kg - result.summary.co2_kg).toFixed(1)))
-  }, [result, naive])
-
-  if (status === 'loading') {
+  if (status === 'loading' && !result) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="h-48 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-sm"
-          />
-        ))}
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+        <CardHeader icon={Scale} iconClassName="text-purple-600" title={t('baselineTitle')} tooltip={t('baselineTooltip')} />
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-44 animate-pulse rounded-lg bg-slate-100" />
+          ))}
+        </div>
       </div>
     )
   }
@@ -159,172 +90,82 @@ export const BaselineComparison: React.FC = () => {
     return null
   }
 
+  const charts: { title: string; data: StrategyMetric[]; tickFormatter: (v: number) => string; tooltipFormatter: (v: number) => string }[] = [
+    {
+      title: t('impactTotalCost'),
+      data: costData,
+      tickFormatter: (v) => `₹${v}`,
+      tooltipFormatter: (v) => formatINR(v),
+    },
+    {
+      title: t('impactDieselHours'),
+      data: hoursData,
+      tickFormatter: (v) => `${v}h`,
+      tooltipFormatter: (v) => `${v} h`,
+    },
+    {
+      title: t('impactCo2'),
+      data: co2Data,
+      tickFormatter: (v) => `${v}`,
+      tooltipFormatter: (v) => formatCo2(v),
+    },
+  ]
+
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-slate-800/80 bg-slate-900/80 p-5 sm:p-6 shadow-2xl backdrop-blur-md">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight text-slate-100">
-            {t('baselineTitle')}
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-400">{t('baselineSubtitle')}</p>
-        </div>
-      </div>
-
-      {/* 3 Metric Comparison Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Metric 1: Total Cost */}
-        <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-4 shadow-inner">
-          <div className="flex items-center justify-between mb-2">
-            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-300">
-              <IndianRupee className="h-4 w-4 text-emerald-400" />
-              {t('totalCost')}
+    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+      <CardHeader
+        icon={Scale}
+        iconClassName="text-purple-600"
+        title={t('baselineTitle')}
+        subtitle={t('baselineSubtitle')}
+        tooltip={t('baselineTooltip')}
+        right={
+          costSavingsPct !== null &&
+          costSavingsPct > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+              <TrendingDown className="h-3.5 w-3.5" />
+              {costSavingsPct}% {t('savings')}
             </span>
-            {costSavingsPct !== null && costSavingsPct > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
-                <TrendingDown className="h-3 w-3" />
-                {costSavingsPct}% {t('savings')}
-              </span>
-            )}
-          </div>
+          )
+        }
+      />
 
-          <div className="h-40 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={costData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
-                  axisLine={{ stroke: CHART_COLORS.grid }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tickFormatter={(val) => `₹${val}`}
-                  tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
-                  axisLine={{ stroke: CHART_COLORS.grid }}
-                  tickLine={false}
-                />
-                <Tooltip
-                  formatter={(val: any) => [formatInr(Number(val)), t('totalCost')]}
-                  contentStyle={{
-                    backgroundColor: CHART_COLORS.tooltipBg,
-                    borderColor: CHART_COLORS.tooltipBorder,
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: '#F8FAFC',
-                  }}
-                />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {costData.map((entry, index) => (
-                    <Cell key={`cost-cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+        {charts.map((chart) => (
+          <div key={chart.title} className="rounded-lg border border-slate-100 bg-slate-50/60 p-3">
+            <div className="mb-1.5 text-center text-xs font-bold uppercase tracking-wide text-slate-500">
+              {chart.title}
+            </div>
+            <div className="h-36 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chart.data} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+                  <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fill: '#475569', fontSize: 11 }}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tickFormatter={chart.tickFormatter}
+                    tick={{ fill: '#475569', fontSize: 11 }}
+                    axisLine={{ stroke: '#e2e8f0' }}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(v) => [chart.tooltipFormatter(Number(v)), chart.title] as [string, string]}
+                    contentStyle={TOOLTIP_STYLE}
+                  />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]} isAnimationActive animationDuration={600}>
+                    {chart.data.map((entry) => (
+                      <Cell key={entry.name} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
-
-        {/* Metric 2: Diesel Runtime */}
-        <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-4 shadow-inner">
-          <div className="flex items-center justify-between mb-2">
-            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-300">
-              <Clock className="h-4 w-4 text-orange-400" />
-              {t('dieselHours')}
-            </span>
-            {hoursSaved !== null && hoursSaved > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/15 border border-orange-500/30 px-2 py-0.5 text-[11px] font-bold text-orange-400">
-                <TrendingDown className="h-3 w-3" />
-                -{hoursSaved} hrs
-              </span>
-            )}
-          </div>
-
-          <div className="h-40 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hoursData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
-                  axisLine={{ stroke: CHART_COLORS.grid }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tickFormatter={(val) => `${val}h`}
-                  tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
-                  axisLine={{ stroke: CHART_COLORS.grid }}
-                  tickLine={false}
-                />
-                <Tooltip
-                  formatter={(val: any) => [`${val} hrs`, t('dieselHours')]}
-                  contentStyle={{
-                    backgroundColor: CHART_COLORS.tooltipBg,
-                    borderColor: CHART_COLORS.tooltipBorder,
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: '#F8FAFC',
-                  }}
-                />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {hoursData.map((entry, index) => (
-                    <Cell key={`hours-cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Metric 3: CO2 Emissions */}
-        <div className="flex flex-col rounded-xl border border-slate-800 bg-slate-950/60 p-4 shadow-inner">
-          <div className="flex items-center justify-between mb-2">
-            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-300">
-              <Leaf className="h-4 w-4 text-emerald-400" />
-              {t('co2Emissions')}
-            </span>
-            {co2Saved !== null && co2Saved > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
-                <TrendingDown className="h-3 w-3" />
-                -{co2Saved} kg
-              </span>
-            )}
-          </div>
-
-          <div className="h-40 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={co2Data} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                <CartesianGrid stroke={CHART_COLORS.grid} strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
-                  axisLine={{ stroke: CHART_COLORS.grid }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tickFormatter={(val) => `${val}`}
-                  tick={{ fill: CHART_COLORS.text, fontSize: 11 }}
-                  axisLine={{ stroke: CHART_COLORS.grid }}
-                  tickLine={false}
-                />
-                <Tooltip
-                  formatter={(val: any) => [formatCo2(Number(val)), t('co2Emissions')]}
-                  contentStyle={{
-                    backgroundColor: CHART_COLORS.tooltipBg,
-                    borderColor: CHART_COLORS.tooltipBorder,
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: '#F8FAFC',
-                  }}
-                />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {co2Data.map((entry, index) => (
-                    <Cell key={`co2-cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { useAppStore } from '../../store/useAppStore'
 import { useT } from '../../i18n/strings'
 import { ENERGY_COLORS, type EnergySourceKey } from '../../theme/colors'
 import { formatHourLabel } from '../../utils/format'
+import { CardHeader } from '../CardHeader'
 import type { HourlyDispatch } from '../../types/api'
 
 interface DominantSourceInfo {
@@ -88,7 +89,7 @@ export const HourTimeline: React.FC = () => {
   const { t } = useT()
   const { result, selectedHour, selectHour, status } = useAppStore()
 
-  if (status === 'loading') {
+  if (status === 'loading' && !result) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -110,47 +111,44 @@ export const HourTimeline: React.FC = () => {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-indigo-600" />
-          <div>
-            <h2 className="text-sm font-bold text-slate-900">{t('timelineTitle')}</h2>
-            <p className="text-[11px] text-slate-500">{t('timelineDesc')}</p>
+      <CardHeader
+        icon={Calendar}
+        title={t('timelineTitle')}
+        subtitle={t('timelineDesc')}
+        tooltip={t('timelineTooltip')}
+        right={
+          <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-slate-600">
+            <span className="flex items-center gap-1">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: ENERGY_COLORS.solar }}
+              />
+              {t('solar')}
+            </span>
+            <span className="flex items-center gap-1">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: ENERGY_COLORS.wind }}
+              />
+              {t('wind')}
+            </span>
+            <span className="flex items-center gap-1">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: ENERGY_COLORS.battery }}
+              />
+              {t('battery')}
+            </span>
+            <span className="flex items-center gap-1">
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ backgroundColor: ENERGY_COLORS.diesel }}
+              />
+              {t('diesel')}
+            </span>
           </div>
-        </div>
-
-        {/* Mini Legend */}
-        <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold text-slate-600">
-          <span className="flex items-center gap-1">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: ENERGY_COLORS.solar }}
-            />
-            {t('solar')}
-          </span>
-          <span className="flex items-center gap-1">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: ENERGY_COLORS.wind }}
-            />
-            {t('wind')}
-          </span>
-          <span className="flex items-center gap-1">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: ENERGY_COLORS.battery }}
-            />
-            {t('battery')}
-          </span>
-          <span className="flex items-center gap-1">
-            <span
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ backgroundColor: ENERGY_COLORS.diesel }}
-            />
-            {t('diesel')}
-          </span>
-        </div>
-      </div>
+        }
+      />
 
       {/* Horizontal Strip of Hour Cells */}
       <div className="mt-4 overflow-x-auto pb-2">

@@ -41,6 +41,14 @@ export function formatPct(val: number, forceDecimals?: number): string {
   return `${isWhole ? Math.round(val) : val.toFixed(1)}%`
 }
 
+export function formatCo2(val: number, decimals = 1): string {
+  if (isNaN(val)) return '0.0 kg'
+  return `${val.toLocaleString('en-IN', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })} kg`
+}
+
 export function formatHourLabel(timestamp: string): string {
   try {
     const d = new Date(timestamp)
@@ -52,6 +60,10 @@ export function formatHourLabel(timestamp: string): string {
   } catch {
     return '12 AM'
   }
+}
+
+export function formatHourTick(_hourIndex: number, timestamp: string): string {
+  return formatHourLabel(timestamp)
 }
 
 export function formatDayHour(timestamp: string, hourIndex?: number): string {

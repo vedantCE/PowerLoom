@@ -7,6 +7,8 @@ import {
   Globe2,
   Database,
   Sparkles,
+  Presentation,
+  Keyboard,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { useT } from '../../i18n/strings'
@@ -25,6 +27,9 @@ export const Header: React.FC = () => {
     status,
     health,
     result,
+    presentationMode,
+    togglePresentationMode,
+    setShortcutsOverlayOpen,
   } = useAppStore()
 
   const isMock = import.meta.env.VITE_USE_MOCK === 'true' || result?.is_mock
@@ -149,16 +154,43 @@ export const Header: React.FC = () => {
           )}
         </button>
 
+        {/* Presentation mode + shortcuts help */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setShortcutsOverlayOpen(true)}
+            aria-label={t('scTitle')}
+            title={t('scTitle')}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+          >
+            <Keyboard className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={togglePresentationMode}
+            aria-pressed={presentationMode}
+            aria-label={t('presentationModeToggle')}
+            title={t('presentationModeToggle')}
+            className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${
+              presentationMode
+                ? 'border-indigo-500 bg-indigo-600 text-white'
+                : 'border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+            }`}
+          >
+            <Presentation className="h-4 w-4" />
+          </button>
+        </div>
+
         {/* Backend & Environment Status Badges */}
         <div className="flex items-center gap-1.5 pl-1">
           {isMock ? (
             <span
               id="mock-badge"
               className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800"
-              title="Running in local mock mode (simulated solver & latency)"
+              title={t('mockDataTooltip')}
             >
               <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-              {t('mockMode')}
+              {t('mockDataChip')}
             </span>
           ) : (
             <span

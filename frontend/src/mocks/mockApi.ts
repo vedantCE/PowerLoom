@@ -13,6 +13,7 @@ import type {
 } from '../types/api'
 import mockOptimizeFixture from './optimize-response.json'
 import presetsFixture from './presets.json'
+import { applyWhatIfOverrides } from './mockWhatIf'
 
 function simulateLatency(minMs = 400, maxMs = 800): Promise<void> {
   const ms = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs
@@ -66,8 +67,7 @@ export async function getPresets(): Promise<PresetSummary[]> {
   return JSON.parse(JSON.stringify(presetsFixture)) as PresetSummary[]
 }
 
-export async function getPreset(id: string): Promise<VillageConfig> {
-  await simulateLatency()
+function buildVillageConfig(id: string): VillageConfig {
   const summary = (presetsFixture as PresetSummary[]).find((p) => p.id === id) ?? presetsFixture[0]
   return {
     id: summary.id,
@@ -117,10 +117,24 @@ export async function getPreset(id: string): Promise<VillageConfig> {
   }
 }
 
+export async function getPreset(id: string): Promise<VillageConfig> {
+  await simulateLatency()
+  return buildVillageConfig(id)
+}
+
 export async function optimize(req: OptimizeRequest): Promise<OptimizeResponse> {
   await simulateLatency()
   const horizon = req.horizon_hours ?? 48
-  return getOrSeedFixture(req.village_id, horizon)
+  const response = getOrSeedFixture(req.village_id, horizon)
+
+  if (req.overrides && Object.keys(req.overrides).length > 0) {
+    const preset = buildVillageConfig(req.village_id)
+    const transformed = applyWhatIfOverrides(response, req.overrides, preset)
+    mockRunsCache.set(transformed.run_id, transformed)
+    return transformed
+  }
+
+  return response
 }
 
 export async function getRuns(villageId?: string): Promise<ScenarioRunSummary[]> {
@@ -223,13 +237,12 @@ const TEMPLATES: Record<Language, ReasonTemplateMap> = {
   },
 }
 
-export async function explain(req: ExplainRequest): Promise<ExplainResponse> {
-  await simulateLatency()
-  const lang: Language = req.language ?? 'en'
-  const run = mockRunsCache.get(req.run_id) ?? defaultSeed
-  const hour = run.hourly.find((h) => h.hour_index === req.hour_index) ?? run.hourly[0]
+// Pure, synchronous, deterministic template renderer for a single hour's
+// explanation. Shared by the mock `explain()` below AND by ExplainBox as an
+// offline fallback when the real POST /api/explain isn't implemented yet
+// (see backend/app/api/routes — no explain router registered).
+export function buildTemplateExplanation(hour: HourlyDispatch, lang: Language): string {
   const timeStr = formatTime(hour.timestamp)
-
   const langTemplates = TEMPLATES[lang] ?? TEMPLATES.en
   const sentences: string[] = []
 
@@ -258,11 +271,20 @@ export async function explain(req: ExplainRequest): Promise<ExplainResponse> {
     }
   }
 
+  return sentences.join(' ')
+}
+
+export async function explain(req: ExplainRequest): Promise<ExplainResponse> {
+  await simulateLatency()
+  const lang: Language = req.language ?? 'en'
+  const run = mockRunsCache.get(req.run_id) ?? defaultSeed
+  const hour = run.hourly.find((h) => h.hour_index === req.hour_index) ?? run.hourly[0]
+
   return {
     run_id: req.run_id,
     hour_index: req.hour_index,
     language: lang,
     reason_codes: hour.reason_codes,
-    explanation: sentences.join(' '),
+    explanation: buildTemplateExplanation(hour, lang),
   }
 }

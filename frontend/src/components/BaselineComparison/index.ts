@@ -1,1 +1,1 @@
-export * from './BaselineComparison'
+export { BaselineComparison } from './BaselineComparison'
