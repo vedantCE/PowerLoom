@@ -11,8 +11,12 @@ import type {
 } from '../types/api'
 import * as mockApi from '../mocks/mockApi'
 
+// In production (Vercel), point this at the Render backend via VITE_API_BASE_URL.
+// Locally it stays '/api', which the Vite dev server proxies to localhost:8000.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+
 export const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   timeout: 15000,
 })
 

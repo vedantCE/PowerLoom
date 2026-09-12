@@ -8,14 +8,19 @@ import {
   Sparkles,
   Presentation,
   Keyboard,
-  UserCog,
-  LayoutDashboard,
+  Menu,
+  X,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { useT } from '../../i18n/strings'
 import type { Language } from '../../types/api'
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  sidebarOpen: boolean
+  onToggleSidebar: () => void
+}
+
+export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) => {
   const { t, lang } = useT()
   const {
     presets,
@@ -30,8 +35,6 @@ export const Header: React.FC = () => {
     result,
     presentationMode,
     togglePresentationMode,
-    operatorMode,
-    toggleOperatorMode,
     setShortcutsOverlayOpen,
   } = useAppStore()
 
@@ -45,22 +48,34 @@ export const Header: React.FC = () => {
   ]
 
   return (
-    <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-6 py-3.5 backdrop-blur-md shadow-xs">
-      {/* Brand / Wordmark */}
-      <div className="flex items-center gap-3">
-        <img src="/logo.png" alt="Powerloom" className="h-12 w-auto object-contain" style={{ background: 'transparent' }} />
-        <div>
+    <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur-md shadow-xs sm:gap-4 sm:px-6 sm:py-3.5">
+      {/* Brand / Wordmark — also the sidebar toggle: opens the Analyst/Operator
+          view drawer on mobile, collapses/expands the panel on desktop. */}
+      <button
+        type="button"
+        onClick={onToggleSidebar}
+        aria-expanded={sidebarOpen}
+        aria-controls="app-sidebar"
+        aria-label={sidebarOpen ? t('collapseSidebar') : t('expandSidebar')}
+        title={sidebarOpen ? t('collapseSidebar') : t('expandSidebar')}
+        className="flex items-center gap-2 rounded-lg py-1 pr-2 pl-1 -ml-1 transition-colors hover:bg-slate-50 sm:gap-3"
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 lg:hidden">
+          {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </span>
+        <img src="/logo.jpg" alt="Powerloom" className="h-9 w-auto shrink-0 object-contain sm:h-12" style={{ background: 'transparent' }} />
+        <div className="text-left">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-base font-bold tracking-tight text-slate-900 sm:text-xl">
               {t('appName')}
             </h1>
           </div>
-          <p className="text-xs font-medium text-slate-500">{t('tagline')}</p>
+          <p className="hidden text-xs font-medium text-slate-500 sm:block">{t('tagline')}</p>
         </div>
-      </div>
+      </button>
 
       {/* Controls: Village, Horizon, Lang, Run */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Village Selector */}
         <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500">
           <MapPin className="mr-1.5 h-4 w-4 text-slate-400 shrink-0" />
@@ -152,43 +167,17 @@ export const Header: React.FC = () => {
           )}
         </button>
 
-        {/* Operator / Analyst mode */}
-        <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-1">
-          <button
-            type="button"
-            id="analyst-view-btn"
-            onClick={() => operatorMode && toggleOperatorMode()}
-            aria-pressed={!operatorMode}
-            title={t('operatorViewToggleTooltip')}
-            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
-              !operatorMode
-                ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <LayoutDashboard className="h-3.5 w-3.5" />
-            {t('analystViewLabel')}
-          </button>
-          <button
-            type="button"
-            id="operator-view-btn"
-            onClick={() => !operatorMode && toggleOperatorMode()}
-            aria-pressed={operatorMode}
-            title={t('operatorViewToggleTooltip')}
-            className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-all ${
-              operatorMode
-                ? 'bg-white text-indigo-700 shadow-xs ring-1 ring-slate-200'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <UserCog className="h-3.5 w-3.5" />
-            {t('operatorViewLabel')}
-          </button>
-        </div>
-
         {/* Presentation mode + shortcuts help */}
         <div className="flex items-center gap-1">
-
+          <button
+            type="button"
+            onClick={() => setShortcutsOverlayOpen(true)}
+            aria-label={t('scTitle')}
+            title={t('scTitle')}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          >
+            <Keyboard className="h-4 w-4" />
+          </button>
           <button
             type="button"
             onClick={togglePresentationMode}

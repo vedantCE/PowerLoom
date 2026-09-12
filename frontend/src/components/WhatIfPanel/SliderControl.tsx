@@ -82,7 +82,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
         aria-label={label}
         aria-valuetext={displayText}
         onChange={(e) => onChange(indexToValue(Number(e.target.value)))}
-        className={`h-3 w-full min-w-0 cursor-pointer touch-manipulation rounded-full accent-current outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${accentClassName}`}
+        className={`h-5 w-full min-w-0 touch-manipulation rounded-full outline-none ${accentClassName}`}
       />
     </div>
   )

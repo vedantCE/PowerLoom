@@ -1,5 +1,75 @@
 @import "tailwindcss";
 
+:root {
+  /* This app is light-only (no dark mode yet). Without this, a browser/OS
+     in dark mode renders native form controls (range, select, checkbox)
+     with dark UA chrome — e.g. a near-black range track — even though the
+     rest of the page stays on the light Tailwind theme. */
+  color-scheme: light;
+}
+
+/* Clickable elements default to a plain arrow cursor unless told otherwise —
+   native <button>/<select> don't get "pointer" for free. Applied globally so
+   no individual component has to remember it. */
+button:not(:disabled),
+select:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+input[type='range'] {
+  cursor: pointer;
+}
+button:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
+/* Custom cross-browser range slider: native styling varies wildly (and can
+   render as a solid dark track under color-scheme: dark) — a flat neutral
+   track with a colored thumb reads consistently everywhere and matches the
+   rest of the app's flat, modern surface language. Track color is inherited
+   via `color` so each slider's existing accent color class still applies. */
+input[type='range'] {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+}
+input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: #e2e8f0; /* slate-200 */
+}
+input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: #e2e8f0;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 16px;
+  width: 16px;
+  margin-top: -5px;
+  border-radius: 9999px;
+  background: currentColor;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+}
+input[type='range']::-moz-range-thumb {
+  height: 16px;
+  width: 16px;
+  border-radius: 9999px;
+  background: currentColor;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+}
+input[type='range']:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+input[type='range']:focus-visible::-moz-range-thumb {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 @theme {
   /* Single stack for all 3 languages: browsers select the right font per
      character run, so Latin, Gujarati and Devanagari all render correctly
