@@ -186,6 +186,16 @@ export async function voiceQuery(req: VoiceQueryRequest): Promise<VoiceQueryResp
   }
 }
 
+// Download the 24-hour PDF report for the given village.
+export async function downloadReport(villageId: string): Promise<Blob> {
+  const response = await apiClient.get('/reports/24-hour', {
+    params: { village_id: villageId },
+    responseType: 'blob',
+    timeout: 60000, // PDF generation can take up to ~30s (MILP + weather fetch)
+  })
+  return response.data as Blob
+}
+
 // Sarvam AI Bulbul TTS — reads a voice-query answer aloud. Returns an audio
 // Blob (mp3) to play via an <audio> element. Callers MUST catch and fall
 // back to window.speechSynthesis: this call fails whenever SARVAM_API_KEY
