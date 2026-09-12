@@ -7,7 +7,6 @@ import {
   Database,
   Sparkles,
   Presentation,
-  Keyboard,
   Menu,
   X,
 } from 'lucide-react'
@@ -60,10 +59,10 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
         title={sidebarOpen ? t('collapseSidebar') : t('expandSidebar')}
         className="flex items-center gap-2 rounded-lg py-1 pr-2 pl-1 -ml-1 transition-colors hover:bg-slate-50 sm:gap-3"
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500 lg:hidden">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-500">
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </span>
-        <img src="/logo.jpg" alt="Powerloom" className="h-9 w-auto shrink-0 object-contain sm:h-12" style={{ background: 'transparent' }} />
+        <img src="/logo_clean.png" alt="Powerloom" className="h-9 w-auto shrink-0 object-contain sm:h-12" />
         <div className="text-left">
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold tracking-tight text-slate-900 sm:text-xl">
@@ -169,15 +168,7 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
 
         {/* Presentation mode + shortcuts help */}
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setShortcutsOverlayOpen(true)}
-            aria-label={t('scTitle')}
-            title={t('scTitle')}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
-          >
-            <Keyboard className="h-4 w-4" />
-          </button>
+
           <button
             type="button"
             onClick={togglePresentationMode}
