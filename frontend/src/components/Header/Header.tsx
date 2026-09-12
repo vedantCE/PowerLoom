@@ -1,6 +1,5 @@
 import React from 'react'
 import {
-  Zap,
   RotateCw,
   MapPin,
   Clock,
@@ -45,17 +44,12 @@ export const Header: React.FC = () => {
     <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-6 py-3.5 backdrop-blur-md shadow-xs">
       {/* Brand / Wordmark */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/20">
-          <Zap className="h-5 w-5 fill-white stroke-white" />
-        </div>
+        <img src="/logo.png" alt="Powerloom" className="h-12 w-auto object-contain" style={{ background: 'transparent' }} />
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold tracking-tight text-slate-900">
               {t('appName')}
             </h1>
-            <span className="rounded-md bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-600/20">
-              v0.1
-            </span>
           </div>
           <p className="text-xs font-medium text-slate-500">{t('tagline')}</p>
         </div>
@@ -156,15 +150,7 @@ export const Header: React.FC = () => {
 
         {/* Presentation mode + shortcuts help */}
         <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setShortcutsOverlayOpen(true)}
-            aria-label={t('scTitle')}
-            title={t('scTitle')}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-          >
-            <Keyboard className="h-4 w-4" />
-          </button>
+
           <button
             type="button"
             onClick={togglePresentationMode}
