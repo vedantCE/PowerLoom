@@ -280,7 +280,7 @@ export const App: React.FC = () => {
                           <EnergyFlow />
                         </div>
 
-                        <div id="energy-mix-section" className="min-w-0 overflow-x-auto">
+                        <div id="energy-mix-section" className="min-w-0">
                           <EnergyMixChart />
                         </div>
 
