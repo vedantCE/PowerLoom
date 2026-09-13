@@ -4,7 +4,6 @@ import {
   MapPin,
   Clock,
   Globe2,
-  Database,
   Sparkles,
   Presentation,
   Menu,
@@ -32,7 +31,6 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
     setLanguage,
     runOptimize,
     status,
-    health,
     result,
     presentationMode,
     togglePresentationMode,
@@ -233,42 +231,6 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
           >
             <Presentation className="h-4 w-4" />
           </button>
-        </div>
-
-        {/* Backend & Environment Status Badges */}
-        <div className="flex items-center gap-1.5 pl-1">
-          {isMock ? (
-            <span
-              id="mock-badge"
-              className="inline-flex items-center gap-1.5 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800"
-              title={t('mockDataTooltip')}
-            >
-              <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-              {t('mockDataChip')}
-            </span>
-          ) : (
-            <span
-              id="backend-badge"
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                health?.status === 'ok'
-                  ? 'border-emerald-300 bg-emerald-50 text-emerald-800'
-                  : 'border-red-300 bg-red-50 text-red-800'
-              }`}
-            >
-              <span
-                className={`h-2 w-2 rounded-full ${
-                  health?.status === 'ok' ? 'bg-emerald-500' : 'bg-red-500'
-                }`}
-              />
-              {t('liveBackend')}
-              {health?.database && (
-                <span className="ml-0.5 inline-flex items-center gap-1 text-[10px] text-slate-500 font-normal">
-                  <Database className="h-3 w-3" />
-                  {health.database}
-                </span>
-              )}
-            </span>
-          )}
         </div>
       </div>
     </header>
