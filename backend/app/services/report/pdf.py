@@ -508,7 +508,12 @@ def _energy_mix_chart(data: ReportData, styles: dict) -> Table:
                 colWidths=[w for _, w, _ in bar_row],
                 rowHeights=[bar_h],
             )
-            bar_style = [("TOPPADDING", (0, 0), (-1, -1), 0), ("BOTTOMPADDING", (0, 0), (-1, -1), 0)]
+            bar_style = [
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ]
             for idx, (_, _, col) in enumerate(bar_row):
                 bar_style.append(("BACKGROUND", (idx, 0), (idx, 0), col))
             bar_tbl.setStyle(TableStyle(bar_style))

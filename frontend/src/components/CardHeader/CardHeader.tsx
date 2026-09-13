@@ -24,7 +24,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
   const [showTooltip, setShowTooltip] = useState(false)
 
   return (
-    <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 pb-3">
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
       <div className="flex items-start gap-2">
         <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${iconClassName}`} />
         <div>

@@ -27,10 +27,11 @@ export const apiClient = axios.create({
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
-// The explain endpoint targets a sub-3s response (Gemini call); fail fast and
-// let ExplainBox fall back to the local template generator rather than
-// leaving the shimmer up for the full 15s default request timeout.
-const EXPLAIN_TIMEOUT_MS = 6000
+// The backend's Gemini deadline is 10s per attempt (the API's own minimum)
+// with up to 2 attempts on failure — give this enough headroom over that
+// worst case that a legitimately slow-but-successful call doesn't get cut
+// off client-side before the backend's own retry budget does.
+const EXPLAIN_TIMEOUT_MS = 22000
 const CHAT_TIMEOUT_MS = 25000
 
 // The default (non-what-if) MILP solve alone is allowed up to 20s

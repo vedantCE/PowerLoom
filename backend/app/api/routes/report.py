@@ -242,7 +242,7 @@ def generate_24h_report(
 
     # 10. Locate logo (frontend/public/logo_clean.png relative to project root)
     here = os.path.dirname(__file__)
-    project_root = os.path.abspath(os.path.join(here, "..", "..", "..", "..", ".."))
+    project_root = os.path.abspath(os.path.join(here, "..", "..", "..", ".."))
     logo_path = os.path.join(project_root, "frontend", "public", "logo_clean.png")
     if not os.path.isfile(logo_path):
         logo_path = None

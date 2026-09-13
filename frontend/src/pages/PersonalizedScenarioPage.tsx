@@ -321,7 +321,7 @@ export const PersonalizedScenarioPage: React.FC<Props> = ({ onBack }) => {
   const displayedAnswer = streamingText
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-2">
 
       {/* ── Page header ── */}
       <div className="flex items-center gap-3">
@@ -349,7 +349,7 @@ export const PersonalizedScenarioPage: React.FC<Props> = ({ onBack }) => {
       ) : (
         <>
           {/* ── Input card ── */}
-          <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs space-y-2">
+          <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-xs space-y-1.5">
             <div className="flex items-center justify-between">
               <label htmlFor="scenario-input" className="block text-xs font-semibold text-slate-800">
                 {listening ? (
@@ -385,14 +385,14 @@ export const PersonalizedScenarioPage: React.FC<Props> = ({ onBack }) => {
                   }
                 }}
                 placeholder={t('voiceInputPlaceholder')}
-                className="flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 transition"
+                className="flex-1 resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200 transition"
               />
               {micSupported && !micDenied && (
                 <button
                   type="button"
                   onClick={listening ? stopListening : startListening}
                   title={listening ? t('voiceMicStop') : t('voiceMicStart')}
-                  className={`shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg border transition ${
+                  className={`shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-lg border transition ${
                     listening
                       ? 'border-indigo-300 bg-indigo-50 text-indigo-600 animate-pulse'
                       : 'border-slate-200 bg-white text-slate-500 hover:bg-slate-50'
@@ -415,7 +415,7 @@ export const PersonalizedScenarioPage: React.FC<Props> = ({ onBack }) => {
                 <button
                   type="button"
                   onClick={handleStop}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.98] transition"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-700 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 active:scale-[0.98] transition"
                 >
                   <Square className="h-3.5 w-3.5" />
                   {t('voiceStopButton')}
@@ -425,7 +425,7 @@ export const PersonalizedScenarioPage: React.FC<Props> = ({ onBack }) => {
                   type="button"
                   onClick={() => void handleAsk()}
                   disabled={!text.trim() || isBusy}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-[0.98] transition disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-[0.98] transition disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Send className="h-3.5 w-3.5" />
                   {t('voiceAskButton')}
@@ -442,19 +442,23 @@ export const PersonalizedScenarioPage: React.FC<Props> = ({ onBack }) => {
               </button>
             </div>
 
-            {/* Example chips */}
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              <span className="text-[10px] text-slate-400">{t('voiceExamplesTitle')}:</span>
-              {examples.map((ex) => (
-                <button
-                  key={ex}
-                  type="button"
-                  onClick={() => void handleAsk(ex)}
-                  className="rounded-full border border-indigo-100 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-700 hover:bg-indigo-100 transition"
-                >
-                  {ex}
-                </button>
-              ))}
+            {/* Example chips — fixed grid so the card's height stays predictable
+                instead of the chips reflowing to a wide single line. */}
+            <div className="pt-0.5">
+              <p className="text-[10px] text-slate-400 mb-1">{t('voiceExamplesTitle')}:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {examples.map((ex) => (
+                  <button
+                    key={ex}
+                    type="button"
+                    onClick={() => void handleAsk(ex)}
+                    className="w-full truncate rounded-full border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-medium text-indigo-700 hover:bg-indigo-100 transition"
+                    title={ex}
+                  >
+                    {ex}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
