@@ -22,8 +22,8 @@ from app.schemas.common import Language
 
 logger = logging.getLogger(__name__)
 
-_MODEL = "gemini-2.5-flash"
-_TIMEOUT_S = 6.0
+_MODEL = "gemini-3.6-flash"
+_TIMEOUT_S = 10.0  # Gemini API rejects any manually-set deadline below 10s
 _TEMPERATURE = 0.2
 _MAX_TOKENS = 120
 _MAX_RESPONSE_CHARS = 400

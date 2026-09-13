@@ -53,7 +53,11 @@ function shouldDrawLink(link: FlowLinkData, flow: FlowData): boolean {
   return true
 }
 
-export const EnergyFlow: React.FC = () => {
+interface EnergyFlowProps {
+  className?: string
+}
+
+export const EnergyFlow: React.FC<EnergyFlowProps> = ({ className }) => {
   const { t, lang } = useT()
   const result = useAppStore((s) => s.result)
   const status = useAppStore((s) => s.status)
@@ -111,7 +115,7 @@ export const EnergyFlow: React.FC = () => {
   const socFraction = Math.max(0, Math.min(1, flow.battery.soc))
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
+    <div className={`rounded-xl border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between ${className ?? 'h-full'}`}>
       <CardHeader
         icon={Activity}
         iconClassName="text-amber-500"
@@ -137,10 +141,10 @@ export const EnergyFlow: React.FC = () => {
         </div>
       )}
 
-      <div className="mt-3">
+      <div className="mt-3 flex-1 min-h-0 flex flex-col justify-center">
         <svg
           viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}
-          className="h-auto w-full"
+          className="h-auto w-full max-h-full"
           role="img"
           aria-label={`${t('energyFlowTitle')}: ${formatDayHour(hour.timestamp, hour.hour_index, lang)}`}
         >

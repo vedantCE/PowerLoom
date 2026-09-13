@@ -11,7 +11,7 @@ import { CardHeader } from '../CardHeader'
 const IS_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
 interface WhatIfPanelProps {
-  onNavigateToScenario?: () => void
+  onNavigateToScenario: () => void
 }
 
 export const WhatIfPanel: React.FC<WhatIfPanelProps> = ({ onNavigateToScenario }) => {
@@ -43,15 +43,13 @@ export const WhatIfPanel: React.FC<WhatIfPanelProps> = ({ onNavigateToScenario }
           title={t('whatIfTitle')}
           tooltip={t('whatIfTooltip')}
           right={
-            onNavigateToScenario ? (
-              <button
-                type="button"
-                onClick={onNavigateToScenario}
-                className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
-              >
-                More <ArrowRight className="h-3 w-3" />
-              </button>
-            ) : undefined
+            <button
+              type="button"
+              onClick={onNavigateToScenario}
+              className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
+            >
+              More <ArrowRight className="h-3 w-3" />
+            </button>
           }
         />
 

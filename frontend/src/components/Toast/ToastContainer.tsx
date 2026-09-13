@@ -22,7 +22,7 @@ export const ToastContainer: React.FC = () => {
   const dismissToast = useAppStore((s) => s.dismissToast)
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex w-full max-w-xs flex-col gap-2">
+    <div className="pointer-events-none fixed bottom-24 right-4 z-50 flex w-full max-w-xs flex-col gap-2">
       <AnimatePresence>
         {toasts.map((toast) => {
           const Icon = ICONS[toast.type]

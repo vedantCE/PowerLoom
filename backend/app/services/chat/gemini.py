@@ -14,12 +14,22 @@ from typing import TYPE_CHECKING
 from app.core.config import settings
 from app.services.chat.prompts import build_system_instruction_with_context
 
+__all__ = [
+    "CHAT_MAX_OUTPUT_TOKENS",
+    "CHAT_MODEL",
+    "CHAT_TEMPERATURE",
+    "CHAT_TIMEOUT_S",
+    "ChatConfigurationError",
+    "ChatServiceError",
+    "generate_chat_response",
+]
+
 if TYPE_CHECKING:
     from app.schemas.chat import ChatMessage
 
 logger = logging.getLogger(__name__)
 
-CHAT_MODEL = "gemini-2.5-flash"
+CHAT_MODEL = "gemini-3.6-flash"
 CHAT_TIMEOUT_S = 15.0
 CHAT_TEMPERATURE = 0.3
 CHAT_MAX_OUTPUT_TOKENS = 1024
@@ -37,6 +47,8 @@ def generate_chat_response(
     message: str,
     context_text: str,
     history: list[ChatMessage] | None = None,
+    max_output_tokens: int = CHAT_MAX_OUTPUT_TOKENS,
+    thinking_budget: int | None = None,
 ) -> str:
     """Generate a grounded response using Gemini with GEMINI_API_KEY_1.
 
@@ -48,6 +60,16 @@ def generate_chat_response(
         The formatted Powerloom microgrid context string.
     history : list[ChatMessage] | None
         Previous chat messages in the conversation.
+    max_output_tokens : int
+        Overrides CHAT_MAX_OUTPUT_TOKENS — e.g. the voice feature's general
+        Q&A path (routes/voice.py) asks for a much shorter cap than the chat
+        widget, since its answers must be short and speakable.
+    thinking_budget : int | None
+        If given, sets Gemini's thinking token budget explicitly (0 disables
+        it). Left as the model default (None) for the chat widget; the voice
+        feature passes 0 because a "thinking" model can otherwise spend the
+        whole (small) max_output_tokens budget on internal reasoning and
+        return a truncated visible answer.
 
     Returns
     -------
@@ -113,7 +135,12 @@ def generate_chat_response(
             config=genai_types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=CHAT_TEMPERATURE,
-                max_output_tokens=CHAT_MAX_OUTPUT_TOKENS,
+                max_output_tokens=max_output_tokens,
+                thinking_config=(
+                    genai_types.ThinkingConfig(thinking_budget=thinking_budget)
+                    if thinking_budget is not None
+                    else None
+                ),
                 http_options=genai_types.HttpOptions(timeout=int(CHAT_TIMEOUT_S * 1000)),
             ),
         )

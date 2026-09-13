@@ -11,11 +11,14 @@ import type {
   ScenarioRunSummary,
   VillageConfig,
 } from '../types/api'
+import type { SpeakRequest, VoiceQueryRequest, VoiceQueryResponse } from '../types/voice'
 import * as mockApi from '../mocks/mockApi'
 
 // In production (Vercel), point this at the Render backend via VITE_API_BASE_URL.
 // Locally it stays '/api', which the Vite dev server proxies to localhost:8000.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+// Exported so the streaming voice endpoint (raw fetch + ReadableStream, which
+// can't go through the axios instance below) resolves against the same base.
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -24,10 +27,11 @@ export const apiClient = axios.create({
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
-// The explain endpoint targets a sub-3s response (Gemini call); fail fast and
-// let ExplainBox fall back to the local template generator rather than
-// leaving the shimmer up for the full 15s default request timeout.
-const EXPLAIN_TIMEOUT_MS = 6000
+// The backend's Gemini deadline is 10s per attempt (the API's own minimum)
+// with up to 2 attempts on failure — give this enough headroom over that
+// worst case that a legitimately slow-but-successful call doesn't get cut
+// off client-side before the backend's own retry budget does.
+const EXPLAIN_TIMEOUT_MS = 22000
 const CHAT_TIMEOUT_MS = 25000
 
 // The default (non-what-if) MILP solve alone is allowed up to 20s
@@ -36,6 +40,16 @@ const CHAT_TIMEOUT_MS = 25000
 // enough headroom that a legitimately slow solve doesn't get killed client-side
 // before the backend's own 20s solver budget does.
 const OPTIMIZE_TIMEOUT_MS = 30000
+
+// The non-streamed voice query is the fallback path when SSE fails or is
+// unavailable — it still does a Gemini call, so give it explainer-like
+// headroom rather than the tight EXPLAIN_TIMEOUT_MS.
+const VOICE_TIMEOUT_MS = 10000
+
+// Sarvam TTS is a cosmetic enhancement (see CLAUDE.md "Voice and streaming")
+// — fail fast so a slow/unreachable TTS call doesn't delay the browser
+// speechSynthesis fallback.
+const SPEAK_TIMEOUT_MS = 12000
 
 export function formatApiError(err: unknown): string {
   if (err instanceof AxiosError) {
@@ -157,4 +171,40 @@ export async function chat(req: ChatRequest): Promise<ChatResponse> {
   } catch (err) {
     throw new Error(formatApiError(err))
   }
+}
+
+// Non-streaming voice query — the fallback used when SSE (voiceStream in
+// PersonalizedScenarioPage.tsx) fails or is unavailable. No mock-mode branch:
+// the voice feature requires a real run_id from the live backend.
+export async function voiceQuery(req: VoiceQueryRequest): Promise<VoiceQueryResponse> {
+  try {
+    const response = await apiClient.post<VoiceQueryResponse>('/voice/query', req, {
+      timeout: VOICE_TIMEOUT_MS,
+    })
+    return response.data
+  } catch (err) {
+    throw new Error(formatApiError(err))
+  }
+}
+
+// Download the 24-hour PDF report for the given village.
+export async function downloadReport(villageId: string): Promise<Blob> {
+  const response = await apiClient.get('/reports/24-hour', {
+    params: { village_id: villageId },
+    responseType: 'blob',
+    timeout: 60000, // PDF generation can take up to ~30s (MILP + weather fetch)
+  })
+  return response.data as Blob
+}
+
+// Sarvam AI Bulbul TTS — reads a voice-query answer aloud. Returns an audio
+// Blob (mp3) to play via an <audio> element. Callers MUST catch and fall
+// back to window.speechSynthesis: this call fails whenever SARVAM_API_KEY
+// isn't configured, so it is never the only way to hear an answer.
+export async function speak(req: SpeakRequest): Promise<Blob> {
+  const response = await apiClient.post<Blob>('/voice/speak', req, {
+    timeout: SPEAK_TIMEOUT_MS,
+    responseType: 'blob',
+  })
+  return response.data
 }

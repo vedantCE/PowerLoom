@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   RotateCw,
   MapPin,
@@ -9,10 +9,12 @@ import {
   Presentation,
   Menu,
   X,
+  FileDown,
 } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 import { useT } from '../../i18n/strings'
 import type { Language } from '../../types/api'
+import { downloadReport } from '../../api/client'
 
 interface HeaderProps {
   sidebarOpen: boolean
@@ -34,7 +36,32 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
     result,
     presentationMode,
     togglePresentationMode,
+    pushToast,
   } = useAppStore()
+
+  const [reportLoading, setReportLoading] = useState(false)
+
+  const handleDownloadReport = async () => {
+    if (!selectedVillageId || reportLoading) return
+    setReportLoading(true)
+    try {
+      const blob = await downloadReport(selectedVillageId)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      const today = new Date().toISOString().slice(0, 10)
+      a.href = url
+      a.download = `Microgrid_24H_Energy_Dispatch_${today}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      pushToast('success', 'Report downloaded successfully')
+    } catch {
+      pushToast('error', 'Unable to generate report. Please try again.')
+    } finally {
+      setReportLoading(false)
+    }
+  }
 
   const isMock = import.meta.env.VITE_USE_MOCK === 'true' || result?.is_mock
   const isLoading = status === 'loading'
@@ -75,7 +102,7 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
       {/* Controls: Village, Horizon, Lang, Run */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Village Selector */}
-        <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500">
+        <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 max-w-full overflow-hidden">
           <MapPin className="mr-1.5 h-4 w-4 text-slate-400 shrink-0" />
           <select
             id="village-select"
@@ -83,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
             value={selectedVillageId ?? ''}
             onChange={(e) => selectVillage(e.target.value)}
             disabled={isLoading}
-            className="cursor-pointer bg-transparent text-sm font-semibold text-slate-800 outline-none disabled:cursor-not-allowed"
+            className="cursor-pointer bg-transparent text-xs sm:text-sm font-semibold text-slate-800 outline-none disabled:cursor-not-allowed max-w-[200px] xs:max-w-[260px] sm:max-w-[340px] truncate"
           >
             {presets.map((p) => (
               <option key={p.id} value={p.id} className="text-slate-800">
@@ -164,6 +191,30 @@ export const Header: React.FC<HeaderProps> = ({ sidebarOpen, onToggleSidebar }) 
             </>
           )}
         </button>
+
+        {/* Download 24-Hour Report Button */}
+        {!isMock && selectedVillageId && (
+          <button
+            type="button"
+            id="download-report-btn"
+            onClick={handleDownloadReport}
+            disabled={reportLoading}
+            title="Download 24-Hour Energy Dispatch Report (PDF)"
+            className="flex items-center gap-2 rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-98 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {reportLoading ? (
+              <>
+                <RotateCw className="h-3.5 w-3.5 animate-spin" />
+                <span className="hidden sm:inline">Generating Report...</span>
+              </>
+            ) : (
+              <>
+                <FileDown className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Download 24-Hour Report</span>
+              </>
+            )}
+          </button>
+        )}
 
         {/* Presentation mode + shortcuts help */}
         <div className="flex items-center gap-1">

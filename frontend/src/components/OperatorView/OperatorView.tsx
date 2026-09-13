@@ -50,69 +50,69 @@ export const OperatorView: React.FC = () => {
   const nextHours = result.hourly.slice(Math.max(currentIdx, 0), Math.max(currentIdx, 0) + 6)
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full lg:overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 items-stretch h-full lg:overflow-hidden">
       {/* Left Column */}
-      <div className="lg:col-span-2 flex flex-col gap-4 h-full min-h-0">
+      <div className="lg:col-span-2 flex flex-col gap-4 lg:gap-6 h-full min-h-0">
         {/* 1. What should I do now? */}
-        <div className="shrink-0 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-6 shadow-xs sm:p-8">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md">
-              <Lightbulb className="h-7 w-7" />
+        <div className="shrink-0 rounded-xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-white p-5 sm:p-6 shadow-xs flex items-center min-h-[110px]">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-md">
+              <Lightbulb className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-indigo-700">
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-indigo-700">
                 {t('operatorAdviceTitle')}
               </h2>
-              <p className="mt-2 text-xl font-bold leading-snug text-slate-900 sm:text-2xl">{advice}</p>
+              <p className="mt-1 text-lg font-bold leading-snug text-slate-900 sm:text-2xl">{advice}</p>
             </div>
           </div>
         </div>
 
         {/* 2. Energy flow, large */}
-        <div className="flex-1 min-h-0">
-          <EnergyFlow />
+        <div className="flex-1 min-h-0 flex flex-col">
+          <EnergyFlow className="h-full" />
         </div>
       </div>
 
       {/* Right Column */}
-      <div className="flex flex-col gap-4 h-full min-h-0">
+      <div className="flex flex-col gap-4 lg:gap-6 h-full min-h-0">
         {/* 4. Today's savings in rupees (Top) */}
-        <div className="shrink-0 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 shadow-xs sm:p-8">
+        <div className="shrink-0 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-5 sm:p-6 shadow-xs flex items-center min-h-[110px]">
           <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md">
-              <IndianRupee className="h-7 w-7" />
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md">
+              <IndianRupee className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
             <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-emerald-700">
+              <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-emerald-700">
                 {t('operatorSavingsTitle')}
               </h2>
-              <p className="mt-1 text-3xl font-extrabold text-slate-900 sm:text-4xl">
+              <p className="mt-1 text-2xl font-extrabold text-slate-900 sm:text-3xl">
                 {formatINR(costSavedVal)}
               </p>
-              <p className="mt-1 text-xs font-medium text-slate-500">{t('operatorSavingsSub')}</p>
+              <p className="mt-0.5 text-xs font-medium text-slate-500">{t('operatorSavingsSub')}</p>
             </div>
           </div>
         </div>
 
         {/* 3. Next 6 hours icon strip (Bottom) */}
-        <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-xs min-h-0">
+        <div className="flex-1 flex flex-col rounded-xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs min-h-0 justify-between">
           <CardHeader
             icon={Sun}
             iconClassName="text-amber-500"
             title={t('operatorNextHoursTitle')}
             tooltip={t('operatorNextHoursTitle')}
           />
-          <div className="mt-4 grid grid-cols-2 sm:grid-cols-2 gap-3 flex-1 overflow-y-auto">
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3 flex-1 min-h-0 overflow-y-auto">
             {nextHours.map((hour) => {
               const source = dominantSource(hour)
               const Icon = SOURCE_ICON[source]
               return (
                 <div
                   key={hour.hour_index}
-                  className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center ${SOURCE_COLOR[source]}`}
+                  className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-3.5 sm:p-4 text-center ${SOURCE_COLOR[source]}`}
                 >
-                  <Icon className="h-7 w-7" />
-                  <span className="text-sm font-bold">{formatHourLabel(hour.timestamp, lang)}</span>
+                  <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
+                  <span className="text-xs sm:text-sm font-bold">{formatHourLabel(hour.timestamp, lang)}</span>
                 </div>
               )
             })}
