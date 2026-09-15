@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 import unicodedata
 
 from app.core.config import settings
@@ -23,7 +24,9 @@ from app.schemas.common import Language
 logger = logging.getLogger(__name__)
 
 _MODEL = "gemini-3.6-flash"
-_TIMEOUT_S = 10.0  # Gemini API rejects any manually-set deadline below 10s
+_TIMEOUT_S = 30.0  # Gemini API rejects any manually-set deadline below 10s
+_MAX_ATTEMPTS = 3
+_RETRY_BACKOFF_S = 1.5
 _TEMPERATURE = 0.2
 _MAX_TOKENS = 120
 _MAX_RESPONSE_CHARS = 400
@@ -203,8 +206,8 @@ def explain(facts: dict, reason_codes: list[str], language: Language) -> str:
         f"Facts:\n{json.dumps(facts, ensure_ascii=False, indent=2)}"
     )
 
-    # Try up to 2 attempts (1 retry)
-    for attempt in range(2):
+    # Try up to _MAX_ATTEMPTS attempts, with a short backoff between retries
+    for attempt in range(_MAX_ATTEMPTS):
         try:
             response = client.models.generate_content(
                 model=_MODEL,
@@ -219,6 +222,7 @@ def explain(facts: dict, reason_codes: list[str], language: Language) -> str:
             text = (response.text or "").strip()
 
             local_time = str(facts.get("local_time", ""))
+            is_last_attempt = attempt == _MAX_ATTEMPTS - 1
             if _validate_response(text, facts, local_time):
                 logger.info("explainer_path=gemini (attempt=%d)", attempt + 1)
                 return text
@@ -226,16 +230,20 @@ def explain(facts: dict, reason_codes: list[str], language: Language) -> str:
                 logger.warning(
                     "Gemini response failed validation on attempt %d — %s",
                     attempt + 1,
-                    "retrying" if attempt == 0 else "falling back to template",
+                    "falling back to template" if is_last_attempt else "retrying",
                 )
 
         except Exception as exc:
+            is_last_attempt = attempt == _MAX_ATTEMPTS - 1
             logger.warning(
                 "Gemini API error on attempt %d: %s — %s",
                 attempt + 1,
                 exc,
-                "retrying" if attempt == 0 else "falling back to template",
+                "falling back to template" if is_last_attempt else "retrying",
             )
+
+        if attempt < _MAX_ATTEMPTS - 1:
+            time.sleep(_RETRY_BACKOFF_S * (attempt + 1))
 
     logger.info("explainer_path=template (gemini exhausted)")
     return build_template_explanation(facts, reason_codes, language)
